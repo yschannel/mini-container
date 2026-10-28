@@ -1,0 +1,8 @@
+Time: 2026-10-28T11:57:17.451436+00:00
+Command: ./build/debug/minic --help
+Code SHA: unavailable; uncommitted S00 workspace
+minic: S00 skeleton only (C++17)
+Usage: minic --help | --version
+Runtime, run command, namespaces, Rootfs and cgroup are not implemented.
+
+Exit: 0

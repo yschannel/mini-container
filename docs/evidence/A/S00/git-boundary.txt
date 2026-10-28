@@ -1,0 +1,10 @@
+2026-10-28 Agent sandbox observation
+pwd -> /home/hitomizu/projects/mini-container (0)
+git status --short --branch -> fatal: not a git repository (or any of the parent directories): .git (128)
+git rev-parse --show-toplevel --git-dir -> same error (128)
+git remote -v -> same error (128)
+ls -ld .git -> dr-xr-xr-x, restricted directory; not removed or modified.
+No AGENTS.md discovered under project or checked ancestor directories.
+These observations do not establish the ordinary terminal's true Git boundary.
+
+Follow-up: A reports ordinary terminal has no .git and rev-parse reports not a repository. Sandbox git init -b main attempted: exit 1, .git/info/: Read-only file system. Restricted directory was not deleted.

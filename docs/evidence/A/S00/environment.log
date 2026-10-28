@@ -1,0 +1,170 @@
+Time: 2026-10-28T11:57:18.438637+00:00
+Command: cat /etc/os-release; uname -r; uname -m; systemd-detect-virt; id; git --version; g++ --version; cmake --version; make --version; gdb --version; strace --version; file --version; readelf --version; systemctl --version; findmnt -t cgroup2; cat /proc/self/cgroup; cat /sys/fs/cgroup/cgroup.controllers; file /usr/bin/busybox; readelf -l /usr/bin/busybox; readelf -d /usr/bin/busybox; apt-cache policy cmake g++ make gdb strace file binutils busybox-static
+Code SHA: unavailable; uncommitted S00 workspace
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+7.0.0-38-generic
+x86_64
+vmware
+uid=1000(hitomizu) gid=1000(hitomizu) groups=1000(hitomizu),65534(nogroup)
+git version 2.43.0
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+cmake version 3.28.3
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+GNU Make 4.3
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+GNU gdb (Ubuntu 15.0.50.20240403-0ubuntu1) 15.0.50.20240403-git
+Copyright (C) 2024 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+strace -- version 6.8
+Copyright (c) 1991-2024 The strace developers <https://strace.io>.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Optional features enabled: stack-trace=libunwind stack-demangle m32-mpers mx32-mpers
+file-5.45
+magic file from /etc/magic:/usr/share/misc/magic
+GNU readelf (GNU Binutils for Ubuntu) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) any later version.
+This program has absolutely no warranty.
+systemd 255 (255.4-1ubuntu8.17)
++PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified
+TARGET         SOURCE  FSTYPE  OPTIONS
+/sys/fs/cgroup cgroup2 cgroup2 ro,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot
+0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.gnome.Terminal.slice/vte-spawn-79898d7a-2678-4fb3-a5f8-50835762915d.scope
+cpuset cpu io memory hugetlb pids rdma misc dmem
+/usr/bin/busybox: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=351ba74c282274bdd56e030c641d226cab5c14b7, for GNU/Linux 3.2.0, stripped
+
+Elf file type is EXEC (Executable file)
+Entry point 0x410870
+There are 10 program headers, starting at offset 64
+
+Program Headers:
+  Type           Offset             VirtAddr           PhysAddr
+                 FileSiz            MemSiz              Flags  Align
+  LOAD           0x0000000000000000 0x0000000000400000 0x0000000000400000
+                 0x00000000000006c8 0x00000000000006c8  R      0x1000
+  LOAD           0x0000000000001000 0x0000000000401000 0x0000000000401000
+                 0x00000000001a7865 0x00000000001a7865  R E    0x1000
+  LOAD           0x00000000001a9000 0x00000000005a9000 0x00000000005a9000
+                 0x00000000000521e5 0x00000000000521e5  R      0x1000
+  LOAD           0x00000000001fb820 0x00000000005fc820 0x00000000005fc820
+                 0x0000000000009568 0x00000000000108e8  RW     0x1000
+  NOTE           0x0000000000000270 0x0000000000400270 0x0000000000400270
+                 0x0000000000000020 0x0000000000000020  R      0x8
+  NOTE           0x0000000000000290 0x0000000000400290 0x0000000000400290
+                 0x0000000000000044 0x0000000000000044  R      0x4
+  TLS            0x00000000001fb820 0x00000000005fc820 0x00000000005fc820
+                 0x0000000000000028 0x0000000000000082  R      0x8
+  GNU_PROPERTY   0x0000000000000270 0x0000000000400270 0x0000000000400270
+                 0x0000000000000020 0x0000000000000020  R      0x8
+  GNU_STACK      0x0000000000000000 0x0000000000000000 0x0000000000000000
+                 0x0000000000000000 0x0000000000000000  RW     0x10
+  GNU_RELRO      0x00000000001fb820 0x00000000005fc820 0x00000000005fc820
+                 0x00000000000077e0 0x00000000000077e0  R      0x1
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .note.gnu.property .note.gnu.build-id .note.ABI-tag .rela.plt 
+   01     .init .plt .text .fini 
+   02     .rodata .stapsdt.base rodata.cst32 .eh_frame .gcc_except_table 
+   03     .tdata .init_array .fini_array .data.rel.ro .got .data .bss 
+   04     .note.gnu.property 
+   05     .note.gnu.build-id .note.ABI-tag 
+   06     .tdata .tbss 
+   07     .note.gnu.property 
+   08     
+   09     .tdata .init_array .fini_array .data.rel.ro .got 
+
+There is no dynamic section in this file.
+cmake:
+  Installed: 3.28.3-1build7
+  Candidate: 3.28.3-1build7
+  Version table:
+ *** 3.28.3-1build7 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+g++:
+  Installed: 4:13.2.0-7ubuntu1
+  Candidate: 4:13.2.0-7ubuntu1
+  Version table:
+ *** 4:13.2.0-7ubuntu1 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+make:
+  Installed: 4.3-4.1build2
+  Candidate: 4.3-4.1build2
+  Version table:
+ *** 4.3-4.1build2 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+gdb:
+  Installed: 15.0.50.20240403-0ubuntu1
+  Candidate: 15.1-1ubuntu1~24.04.1
+  Version table:
+     15.1-1ubuntu1~24.04.1 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages
+ *** 15.0.50.20240403-0ubuntu1 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+strace:
+  Installed: 6.8-0ubuntu2
+  Candidate: 6.8-0ubuntu2
+  Version table:
+ *** 6.8-0ubuntu2 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+file:
+  Installed: 1:5.45-3build1
+  Candidate: 1:5.45-3build1
+  Version table:
+ *** 1:5.45-3build1 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+        100 /var/lib/dpkg/status
+binutils:
+  Installed: 2.42-4ubuntu2.10
+  Candidate: 2.42-4ubuntu2.10
+  Version table:
+ *** 2.42-4ubuntu2.10 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages
+        100 /var/lib/dpkg/status
+     2.42-4ubuntu2.8 500
+        500 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages
+     2.42-4ubuntu2 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+busybox-static:
+  Installed: 1:1.36.1-6ubuntu3.1
+  Candidate: 1:1.36.1-6ubuntu3.1
+  Version table:
+ *** 1:1.36.1-6ubuntu3.1 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages
+        500 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages
+        100 /var/lib/dpkg/status
+     1:1.36.1-6ubuntu3 500
+        500 http://cn.archive.ubuntu.com/ubuntu noble/main amd64 Packages
+
+Exit: 0

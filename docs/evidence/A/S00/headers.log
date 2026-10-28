@@ -1,0 +1,5 @@
+Time: 2026-10-28T11:57:18.150696+00:00
+Command: printf '#include <minic/config.hpp>\n#include <minic/result.hpp>\n#include <minic/runtime.hpp>\n#include <minic/cgroup.hpp>\n' | g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude -x c++ -fsyntax-only -
+Code SHA: unavailable; uncommitted S00 workspace
+
+Exit: 0

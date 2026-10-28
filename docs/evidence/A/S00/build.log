@@ -1,0 +1,8 @@
+Time: 2026-10-28T11:57:17.434849+00:00
+Command: cmake --build build/debug -j2
+Code SHA: unavailable; uncommitted S00 workspace
+[ 50%] Building CXX object CMakeFiles/minic.dir/src/main_cli.cpp.o
+[100%] Linking CXX executable minic
+[100%] Built target minic
+
+Exit: 0

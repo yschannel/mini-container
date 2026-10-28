@@ -1,0 +1,6 @@
+Time: 2026-10-28T11:57:18.154439+00:00
+Command: ./build/debug/minic run
+Code SHA: unavailable; uncommitted S00 workspace
+S00 skeleton: only --help and --version are supported
+
+Exit: 125

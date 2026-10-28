@@ -1,0 +1,9 @@
+2026-10-28 GitHub connector observation
+get_user_login -> login yschannel (success; no token exposed).
+get_repo(repository_full_name="yschannel/mini-container") -> GitHub API 404 Not Found.
+404 is not proof of nonexistence when connector access may be restricted.
+Earlier invalid-argument probes did not query or mutate repositories.
+No create-repository tool available; gh absent locally.
+No repository created, no commit created, no push performed, no collaborator invitation sent.
+
+Follow-up: get_repo succeeded: owner yschannel, public, size=0, default_branch=main, push/admin permission available to connector. URL https://github.com/yschannel/mini-container . No commit or push performed.

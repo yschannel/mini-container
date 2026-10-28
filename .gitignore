@@ -1,0 +1,16 @@
+/build/
+/artifacts/
+/.local/
+/.agents/
+/.codex/
+/.aws/
+*.core
+core
+# Local Rootfs assets and credentials
+/rootfs/
+/Rootfs/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
