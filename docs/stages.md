@@ -25,6 +25,6 @@
 
 S00：初始提交已由 A 推送。旧报告 `docs/evidence/A/S00/report.md` 是推送前记录，保留原始观察；不让 A 为补填自身 SHA 再提交。C00=`40040ab865ece11b1f7211ca37e01ac4c2979d0f`；本地 `origin/main`、HEAD 与远端 `main` 均已核实一致。
 
-S01：B 已在 `b/s01-env-build` 执行环境检查、骨架构建与公共接口审查；人工检查、A 在 Ubuntu 对本阶段构建变更的重测、双方接口确认及 PR 审查合并待完成。C01 待合并后填写。S02–S10 均 NOT_RUN。
+S01：B 已在 `b/s01-env-build` 执行环境检查、骨架构建与公共接口审查；A 在 Ubuntu 对 `73bf10741497796e233e3cc3f729ee612f446439` 配置、构建、帮助、版本重测通过。B 本人操作已回传，三项理解确认待完成；A 接口确认及 PR 审查合并待完成。C01 待合并后填写。S02–S10 均 NOT_RUN。
 
 仓库 yschannel/mini-container；A yschannel / Ubuntu，B Blonisco / openSUSE。汇报 2026-11-04，功能冻结 2026-11-02。
