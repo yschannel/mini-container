@@ -29,4 +29,4 @@
 
 人工检查进展：B 回传本人终端输出，配置和构建成功、`--help` 显示骨架，`uname -m` 为 x86_64；本人终端 `findmnt -t cgroup2` 显示 cgroup2 挂载为 `rw`，与 Agent 沙箱内的 `ro` 不同，应以各自执行环境分别记录，`rw` 本身仍不证明已有项目可用委派。B 后续回传 `git log -1 --oneline`，显示 `73bf107 (HEAD -> b/s01-env-build)`，该项已确认。双机原生构建、控制器与委派区别、接口所有权三项理解尚待 B 明确确认。Agent 不代本人签认。
 
-Git：`b/s01-env-build`；实现提交 `5284db753dc74d3c091746407479de60dad3dc15`；A 在 Ubuntu 被测分支 SHA `73bf10741497796e233e3cc3f729ee612f446439`。分支已推送；PR、审查/合并状态与 C01 待后续填写。A 审查合并后记录真实 C01，再交接 A 拉取 C01 进入 S02。S05 不提前启动。
+Git：`b/s01-env-build`；实现提交 `5284db753dc74d3c091746407479de60dad3dc15`；A 在 Ubuntu 被测分支 SHA `73bf10741497796e233e3cc3f729ee612f446439`。分支已推送；PR `https://github.com/yschannel/mini-container/pull/1` 已创建，审查/合并待 A 处理，C01 待合并后填写。A 审查合并后记录真实 C01，再交接 A 拉取 C01 进入 S02。S05 不提前启动。
