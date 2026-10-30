@@ -25,6 +25,8 @@
 
 S00：初始提交已由 A 推送。旧报告 `docs/evidence/A/S00/report.md` 是推送前记录，保留原始观察；不让 A 为补填自身 SHA 再提交。C00=`40040ab865ece11b1f7211ca37e01ac4c2979d0f`；本地 `origin/main`、HEAD 与远端 `main` 均已核实一致。
 
-S01：B 已在 `b/s01-env-build` 执行环境检查、骨架构建与公共接口审查；A 在 Ubuntu 对 `73bf10741497796e233e3cc3f729ee612f446439` 配置、构建、帮助、版本重测通过。B 本人操作已回传，三项理解确认待完成；A 接口确认及 PR 审查合并待完成。C01 待合并后填写。S02–S10 均 NOT_RUN。
+S01：A 已审查并在 GitHub 合并 PR #1；两机构建通过（用户确认）。真实 C01=`22019e8d860464936d21ab3784c6fcf27f070269`，S02 开始时 main HEAD 与 origin/main 一致、工作区干净。此前理解确认仍保留待完成状态；按 A 本次明确授权，结合 S02 调试补齐，不阻塞开发，不代本人签认。
+
+S02：A 在 `a/s02-v0-runtime` 实现 V0；公共头未改动。仅 fork/exec/错误管道/wait/结果输出，不实现 namespace、Rootfs、cgroup。B 的 CMake 源登记、A 本人 GDB 与 B 审查待完成；C02 待合并后填写。S03–S10 NOT_RUN。
 
 仓库 yschannel/mini-container；A yschannel / Ubuntu，B Blonisco / openSUSE。汇报 2026-11-04，功能冻结 2026-11-02。
