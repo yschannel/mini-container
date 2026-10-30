@@ -1,0 +1,73 @@
+
+[os_release]
+NAME="openSUSE Tumbleweed"
+# VERSION="20261028"
+ID="opensuse-tumbleweed"
+ID_LIKE="opensuse suse"
+VERSION_ID="20261028"
+PRETTY_NAME="openSUSE Tumbleweed"
+ANSI_COLOR="0;32"
+# CPE 2.3 format, boo#1217921
+CPE_NAME="cpe:2.3:o:opensuse:tumbleweed:20261028:*:*:*:*:*:*:*"
+#CPE 2.2 format
+#CPE_NAME="cpe:/o:opensuse:tumbleweed:20261028"
+BUG_REPORT_URL="https://bugzilla.opensuse.org"
+SUPPORT_URL="https://bugs.opensuse.org"
+HOME_URL="https://www.opensuse.org"
+DOCUMENTATION_URL="https://en.opensuse.org/Portal:Tumbleweed"
+LOGO="distributor-logo-Tumbleweed"
+
+[kernel]
+7.2.11-1-default
+
+[architecture]
+x86_64
+
+[identity]
+uid=1000(zhangboyan) gid=1000(zhangboyan) groups=1000(zhangboyan),65534(nobody)
+
+[virtualization]
+container-other
+
+[systemd]
+systemd 261 (261.4)
++PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE -SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +LIBARCHIVE
+git: /usr/bin/git
+c++: /usr/bin/c++
+cmake: /usr/bin/cmake
+gdb: /usr/bin/gdb
+strace: /usr/bin/strace
+file: /usr/bin/file
+readelf: /usr/bin/readelf
+busybox: /usr/bin/busybox
+
+[cgroup2_mount]
+TARGET         SOURCE  FSTYPE  OPTIONS
+/sys/fs/cgroup cgroup2 cgroup2 ro,nosuid,nodev,noexec,relatime,seclabel,nsdelegate,memory_recursiveprot,memory_hugetlb_accounting
+
+[self_cgroup]
+0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-69300.scope
+
+[root_controllers]
+cpuset cpu io memory hugetlb pids rdma misc dmem
+
+[root_subtree_control]
+pids
+
+[current_controllers]
+pids
+
+[current_subtree_control]
+
+[busybox_static_file]
+/usr/bin/busybox-static: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=86de2c5c5268aac4776d7cbcae368c5f259f0d7b, for GNU/Linux 4.3.0, stripped
+
+[busybox_static_dynamic]
+
+There is no dynamic section in this file.
+
+[capability_summary]
+build_tools=present (build still requires verification)
+cgroup2=mounted
+current_subtree_control=not_writable_or_not_visible
+v1_delegation=UNVERIFIED (requires writable delegated subtree and privileged test)

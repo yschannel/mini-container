@@ -1,0 +1,57 @@
+Loading repository data...
+Reading installed packages...
+
+S  | Name                                | Summary                                                             | Type
+---+-------------------------------------+---------------------------------------------------------------------+--------
+i  | binutils                            | GNU Binutils                                                        | package
+i  | binutils-devel                      | GNU binutils (BFD development files)                                | package
+i  | busybox                             | Minimalist variant of UNIX utilities linked in a single executable  | package
+i+ | busybox-hostname                    | Busybox applets replacing hostname                                  | package
+i  | busybox-static                      | Static linked version of Busybox, a compact UNIX utility collection | package
+i+ | cmake                               | Cross-platform make system                                          | package
+i  | cmake-full                          | Cross-platform make system                                          | package
+i  | cmake-man                           | Manual pages for cmake, a cross-platform make system                | package
+i  | debuginfod-profile                  | Profile files for build-id HTTP ELF/DWARF server                    | package
+i  | desktop-file-utils                  | Utilities for Manipulating Desktop Files                            | package
+i  | file                                | A Tool to Determine File Types                                      | package
+i  | file-magic                          | Database for libmagic to help identify files                        | package
+i  | filesystem                          | Basic Directory Layout                                              | package
+i  | gcc-c++                             | The system GNU C++ Compiler                                         | package
+i  | gdb                                 | A GNU source-level debugger for C, C++, Fortran and other languages | package
+i  | gdbm-devel                          | Development files for the dbm key/data database library             | package
+i  | git                                 | Fast, scalable, distributed revision control system                 | package
+i+ | git-core                            | Core git tools                                                      | package
+i  | git-email                           | Git tools for sending email                                         | package
+i  | git-svn                             | Git tools for importing Subversion repositories                     | package
+i  | javapackages-filesystem             | Java packages filesystem layout                                     | package
+i  | kdenetwork-filesharing              | KDE Network Libraries                                               | package
+i  | kdenetwork-filesharing-lang         | Translations for package kdenetwork-filesharing                     | package
+i  | kf6-baloo-file                      | Filesearch components for Baloo Framework                           | package
+i  | kf6-kfilemetadata                   | Library for extracting Metadata                                     | package
+i  | kf6-kfilemetadata-lang              | Translations for package kf6-kfilemetadata                          | package
+i+ | lazygit                             | Simple terminal UI for git commands                                 | package
+i  | libaudiofile1                       | An Audio File Library                                               | package
+i  | libboost_filesystem1_92_0           | Boost.Filesystem Runtime Libraries                                  | package
+i  | libboost_filesystem1_92_0-x86-64-v3 | Boost.Filesystem Runtime Libraries                                  | package
+i  | libfile1_0                          | Library for heuristic file type determination based on content      | package
+i  | libgdbm6                            | GNU dbm key/data database                                           | package
+i  | libgdbm_compat4                     | GNU dbm key/data database compat wrapper                            | package
+i  | libkbdfile1                         | File I/O library for kbd utilities                                  | package
+i  | libKF6FileMetaData3                 | Library for extracting Metadata                                     | package
+i  | liblavfile-2_2-0                    | MJPEG Video Capture and Processing Tools                            | package
+i  | libnss_usrfiles2                    | NSS usrfiles plugin for glibc                                       | package
+i  | libopusfile0                        | A high-level API for decoding and seeking within .opus files        | package
+i  | libsndfile1                         | A Library to Handle Various Audio File Formats                      | package
+i  | libsndfile1-32bit                   | A Library to Handle Various Audio File Formats                      | package
+i  | libvorbisfile3                      | The Vorbis General Audio Compression Codec                          | package
+i  | libvorbisfile3-32bit                | The Vorbis General Audio Compression Codec                          | package
+i  | libvorbisfile3-x86-64-v3            | The Vorbis General Audio Compression Codec                          | package
+i  | libxkbfile1                         | X11 keyboard file manipulation library                              | package
+i  | makedumpfile                        | Partial kernel dump                                                 | package
+i  | perl-File-Listing                   | Parse directory listing                                             | package
+i  | perl-File-ShareDir                  | Locate per-dist and per-module shared files                         | package
+i  | perl-Git                            | perl Bindings for Git                                               | package
+i  | python313-olefile                   | Python package to read and write Microsoft OLE2 files               | package
+i  | python313-pygdbmi                   | Parse gdb machine interface output with Python                      | package
+i  | strace                              | A utility to trace the system calls of a program                    | package
+i  | wireless-regdb                      | 802.11 regulatory domain database                                   | package

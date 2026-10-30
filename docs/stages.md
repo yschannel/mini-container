@@ -23,8 +23,8 @@
 
 ## 当前状态
 
-S00：受阻；骨架技术检查见 evidence/A/S00/report.md。A 已在普通终端确认本目录无 .git 且不是 Git 仓库；沙箱 git init 因只读 .git 失败，尚未提交或推送；C00 待填。
-A 已亲自完成配置、构建、帮助、版本验证并确认成功；GitHub 已建公开空仓库。推送后网页文件/完整 SHA 检查与 B 权限确认仍待完成。B 接口审查待 S01。
-仓库目标 yschannel/mini-container，public；A yschannel，B Blonisco；汇报 2026-11-04，功能冻结 2026-11-02。
-S01–S10 均 NOT_RUN。S00 全部门槛通过且真实初始 main 推送成功后，才交接 B 执行 S01。
-C00 不在其自身提交内自引用；远端核实后在交接报告给出完整 SHA，下一阶段登记。
+S00：初始提交已由 A 推送。旧报告 `docs/evidence/A/S00/report.md` 是推送前记录，保留原始观察；不让 A 为补填自身 SHA 再提交。C00=`40040ab865ece11b1f7211ca37e01ac4c2979d0f`；本地 `origin/main`、HEAD 与远端 `main` 均已核实一致。
+
+S01：B 已在 `b/s01-env-build` 执行环境检查、骨架构建与公共接口审查；A 在 Ubuntu 对 `73bf10741497796e233e3cc3f729ee612f446439` 配置、构建、帮助、版本重测通过。B 本人操作已回传，三项理解确认待完成；A 接口确认及 PR 审查合并待完成。C01 待合并后填写。S02–S10 均 NOT_RUN。
+
+仓库 yschannel/mini-container；A yschannel / Ubuntu，B Blonisco / openSUSE。汇报 2026-11-04，功能冻结 2026-11-02。

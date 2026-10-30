@@ -1,0 +1,2 @@
+S00 skeleton: only --help and --version are supported
+exit=125
