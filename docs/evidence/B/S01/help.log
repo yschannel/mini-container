@@ -1,0 +1,4 @@
+minic: S00 skeleton only (C++17)
+Usage: minic --help | --version
+Runtime, run command, namespaces, Rootfs and cgroup are not implemented.
+exit=0
