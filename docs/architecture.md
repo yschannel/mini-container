@@ -1,21 +1,18 @@
-# 架构与责任（计划，尚未实现）
+# V1 架构与责任
 
-S00 仅构建 minic 的帮助与版本；核心方法只有声明。C++17，无第三方下载依赖。
-目标链路：CLI → Runtime → namespace / Rootfs / cgroup → 可信非交互工作负载。
-Runtime 由 A 实现，cgroup 由 B 实现，公共头由 A 维护、B 审查。
+采用 V1_ACCELERATED_WORKFLOW.md 的并行流程。A 负责 Runtime/隔离/Rootfs，B 独立负责 cgroup/资源测试；公共头签名沿用 contracts.md。
 
-1. 父进程校验配置，创建唯一 run_id、RAII 管道与独立 clone 栈。
-2. v0 后续用 fork；isolate/full 用 clone 回调，不用 CLONE_VM/FILES/THREAD。子进程阻塞于控制管道。
-3. full 父进程 create/设置/读回 cgroup，attach 宿主 child PID；任一步失败均不放行，终止并 wait。
-4. 明确控制字节放行后，子进程设置 private mount propagation、hostname、chroot、chdir /、挂载新 PID namespace 的 proc，exec。
-5. 独立错误管道写端 CLOEXEC，记录步骤和 errno；处理 EINTR、短读写与意外 EOF。EOF 结合 wait 状态判定；早死而无错误记录不能当 exec 成功。控制管道 EOF 时禁止执行负载。
-6. 父进程 wait，保存结果，在删除前 snapshot，再显式 cleanup，写 result.json。失败逆序回滚且保留所有错误。
+CLI → Runtime → v0 或 isolate → 可信非交互负载。full 尚未接通，失败不降级。
 
-父进程拥有 clone 栈直到 wait 完成、自己的管道端、cgroup 会话、run_id 与结果；子进程拥有自己的 fd、cwd 和 namespace 内挂载。
-exec 前关闭无关 fd，禁止残留宿主目录 fd；仅删除本次创建且确认归属的资源。
-正常退出、准备/exec/限额失败、控制端断开、中断均需回收。信号处理器只通知正常控制流，后者终止并 wait。
-V1 直接让有限负载作为 PID 1，不承诺任意守护进程；必要时对自己的 namespace init 用 SIGKILL 有界兜底，并验证后代清除。
-运行器自身 SIGKILL、掉电后恢复不在范围。chroot 是教学演示，不能宣称防逃逸。
+- v0：fork/exec 宿主程序，保留原有错误分类和回收。
+- isolate：clone 独立 1 MiB 回调栈，PID/UTS/Mount 三个 namespace，无共享 VM/文件表。父进程保持栈、参数、控制端和错误读端到子进程回收。
+- 子进程先关无关 fd，等控制通道明确 G 字节；父端消失、EOF 或错误则不执行负载。控制通道是 socketpair 的单向使用，MSG_NOSIGNAL 避免改变全局 SIGPIPE 处置。
+- 放行后设置 /dev/null stdin，挂载传播 private、hostname、专用 Rootfs/chroot/chdir /、新 proc，再 exec。stdout/stderr 继承终端。
+- CLOEXEC 错误管道报告准备/exec 步骤及 errno。EOF 结合准备记录和 wait 状态分类，不独立当成功。enabled 记录实际启用的 namespace/Rootfs，cgroup 和可选限额为空。
+- 父进程通过 signalfd 在正常控制流处理中断，必要时 SIGKILL 自己的 namespace init，再 wait。namespace PID 1 的后代生命周期和 namespace 内挂载由内核终止/释放，Rootfs 文件资产保留。
 
-委派布局：空的委派父节点启用控制器，manager 独立叶子，run_id 对应独占负载叶子；后续 S05 在两机验证，不修改系统根层级。
-S00 不创建进程隔离、Rootfs、挂载或 cgroup；daemon/UDS/网络/Seccomp 均不实施。
+只运行可信、有限、非守护化负载，允许负载直接作 namespace PID 1，不做 init/TTY/网络/Seccomp/pivot_root，不声明 chroot 防逃逸或运行器 SIGKILL 后自动恢复。
+
+Rootfs 准备脚本只写项目 .local 中专用新目录，验证静态 BusyBox 架构/链接，不删除既有资产。隔离执行需实际 namespace/mount 权限；Agent EPERM 与普通终端 sudo 结果分别记录。
+
+当前验证与限制见 docs/evidence/A/isolation/report.md。资源模块未接通，后续 full 才加入先创建/设置/attach cgroup 再放行的编排，不提前引用 B 的未完成实现。
