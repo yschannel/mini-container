@@ -21,7 +21,9 @@
 | ASan 默认测试 | `ctest --test-dir build/asan --output-on-failure` | FAIL：当前环境 LeakSanitizer 初始化报 fatal error，`true` 用例的程序结果为 exited/0，但进程最终状态被 LSan 改为 1 |
 | ASan 不含 leak 检测 | `ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/asan --output-on-failure` | PASS，1/1；仅覆盖 AddressSanitizer，未验证 leak 检测 |
 
-代码审查/构建/自动测试由 Agent 在 B 的 openSUSE 工作区执行；“B 本人亲手运行并解释”的人工检查点仍待 B 实际完成。A 的 Ubuntu 最短复验命令：
+代码审查/初次构建和自动测试由 Agent 在 B 的 openSUSE 工作区执行。B 本人随后在同一工作区、提交 `894c34d` 亲手运行 Debug CMake 配置/构建与 CTest（1/1 PASS），缺失程序用例（shell 127；`result.json` 为 `startup_error`、`primary_error.step=exec`、errno 2、清理完成），以及 `ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/asan --output-on-failure`（1/1 PASS）。B 提供了实际终端输出；该 ASan 运行未覆盖 leak 检测。B 的人工检查点据此完成。
+
+A 的 Ubuntu 最短复验命令：
 
 ```bash
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
@@ -29,4 +31,4 @@ cmake --build build/debug -j2
 ctest --test-dir build/debug --output-on-failure
 ```
 
-Ubuntu 结果与 A 对构建/测试改动的审查：NOT_RUN / 待 A。PR、合并与 main SHA：待实际推送和审查后填写。本记录不把缺失的人工确认或双机结果记为 PASS。
+Ubuntu 结果与 A 对构建/测试改动的审查：NOT_RUN / 待 A。PR：`https://github.com/yschannel/mini-container/pull/2`；合并与 main SHA 待 A。本记录不把缺失的双机结果记为 PASS。
