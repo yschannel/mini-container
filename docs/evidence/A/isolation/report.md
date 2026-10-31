@@ -1,55 +1,37 @@
-# A-1 隔离模块交接（进行中）
+# A-1 隔离模块交接
 
-开发基线/main C02：`3d467120786dce63b841820c60dd7e9c4e99eb4e`。开始时 main=origin/main，仅新版 V1_ACCELERATED_WORKFLOW.md 未跟踪，随分支保留；没有未提交源码被覆盖。分支 a/v1-isolation。未发现 AGENTS.md。采用新版顺序，S02 已合并并完成标准构建/CTest/本人 GDB，不重开旧门禁。
+状态：Ubuntu isolate 子集技术验收及 A 本人 strace 完成；待推送最后修复/证据、B 代码审查。不自动合并、不开始 full 集成。
 
-## 实现
+开发基线/main C02：`3d467120786dce63b841820c60dd7e9c4e99eb4e`。开始时 main=origin/main，仅新版 V1_ACCELERATED_WORKFLOW.md 未跟踪并带入分支，无源码修改被覆盖；未发现 AGENTS.md。采用新版并行流程，S02 已完成，不重复旧门禁。
 
-沿用 RunConfig/RunResult 公共签名。Runtime 新增 isolate，clone 使用独立 1 MiB 栈及 CLONE_NEWPID/NEWUTS/NEWNS/SIGCHLD，无共享 VM/文件表。父进程保持栈和参数到 wait 完成。控制通道采用 CLOEXEC Unix stream socketpair（管道语义，父写子读），发送明确 G 字节；MSG_NOSIGNAL 防止父端写入触发 SIGPIPE。子进程关闭其他控制端和宿主 fd，遇到 EOF/错误/非 G 不执行负载。
+被测实现：`66664782a71de911c9e5cd92e561e4c46e8ad1cb`；8 项原生记录均 dirty=false。分支 a/v1-isolation。后续证据提交不改变实现。
 
-放行后：stdin 连接宿主 /dev/null → mount propagation private → hostname → chroot/chdir / → 新 PID namespace 的 proc → exec。错误管道返回步骤与保存的 errno；命名空间/Rootfs 启用情况由成功创建与子进程记录填写 JSON。准备失败、exec 失败、中断均 wait 回收；namespace 最后进程消失后其中挂载由内核释放，Rootfs 文件资产保留。
+## 改动与接口
 
-信号仍采用 signalfd 通知正常控制流；对自己的 namespace PID 1 使用 SIGKILL 作有界终止，其后代由 PID namespace 生命周期清理。只支持可信有限非守护负载；不新增 init，不保证 namespace PID 1 响应普通 SIGTERM。full 不开放，不接 cgroup，不修改 B 的实现/测试或公共签名。源码仍登记在现有 runtime/result_io 目标中，无需 CMake 修改。
+RunConfig/RunResult 公共签名不变。CLI 开放 isolate 参数，full 继续拒绝；Runtime clone 独立 1 MiB 栈及 PID/UTS/Mount namespace，无共享 VM/文件表。父保持栈与参数直至 wait 回收。控制通道为 CLOEXEC socketpair 的单向使用，父明确发送 G、子等待；EOF/错误/非 G 不执行负载，MSG_NOSIGNAL 防止父写端 SIGPIPE。子关闭无关宿主 fd，设置 private 传播、hostname、chroot/chdir /、临时 tmpfs /dev/null 和 proc，再 exec。
 
-Rootfs 脚本只接受仓库 .local 下专用新目标，拒绝既有目录/软链接/..，不删除未知内容；验证 ELF 架构、file 静态标记、readelf INTERP/NEEDED。当前 x86_64 BusyBox 静态验证通过，资产生成于 .local/isolation-rootfs，不入 Git。
+错误管道保存 step/errno，结合准备记录与 wait 分类；JSON 写实际启用功能。signalfd 在正常控制流处理中断，以 SIGKILL 有界终止自己的 namespace PID 1，再 wait，由 PID namespace 生命周期终止后代和释放内部挂载。只支持可信有限非守护化负载；无 init，不承诺 PID 1 响应普通 SIGTERM或运行器自身 SIGKILL 后恢复。
 
-## 实际检查（实现工作区，待提交后原生复验）
+Rootfs 脚本限项目 .local 专用新目录，拒绝既有目录、软链接和 ..，不删除未知内容；验证 BusyBox ELF 架构、静态标记与 INTERP/NEEDED。已确认本机 BusyBox x86_64 静态，Rootfs 资产不入 Git。临时 /dev 挂载在子 namespace 内，不绑定宿主 /dev，不遗留设备节点到资产目录。
 
-| CASE | 状态 | 实际结果 |
+仅修改 A 的 CLI/Runtime/common、Rootfs 脚本、架构/台账/证据及新增流程文档；没有修改 B cgroup/tests 或公共签名。新实现位于现有构建源中，无需 CMake 改动。
+
+## 验证
+
+| 检查 | 状态 | 证据与范围 |
 |---|---|---|
-| Debug CMake 配置/构建 | PASS | 标准 build/debug 入口，编译无警告 |
-| 受影响的 V0 CTest | PASS | v0_regression 1/1；不重复 S02 GDB |
-| Rootfs 生成 | PASS | /usr/bin/busybox，x86_64 静态 ELF、无动态节 |
-| 缺 Rootfs | PASS | 125/startup_error，step=rootfs，errno=2，未创建子进程 |
-| Agent namespace probe | SKIP | 125/startup_error，step=clone，errno=1；不推导 VMware 原生能力 |
-| 原生隔离/三轮/失败/中断回收 | NOT_RUN | 等 A 在普通终端 sudo 执行 verify.py |
-| 新机制本人 strace | NOT_RUN | 等 A 实际操作及回传，不代签 |
+| 标准 Debug CMake 构建 | PASS | cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug；cmake --build build/debug -j2；修复后重建无警告 |
+| 受影响 V0 CTest | PASS | ctest --test-dir build/debug --output-on-failure，v0_regression 1/1 |
+| 静态 BusyBox Rootfs 准备 | PASS | scripts/prepare-rootfs.sh；.local/isolation-rootfs |
+| 缺 Rootfs、原生 live、三轮含 exec 失败 | PASS | native-verification.md；hostname/PID/ns/proc/Rootfs、宿主状态不变与直接子进程回收 |
+| 准备失败处理 | PASS（模拟注入） | strace 注入 mount EPERM，step=mount.private，回收成功；不替代能力实测 |
+| SIGINT/SIGTERM 与后代回收 | PASS | 先确认后台后代存活，中断后 137/signaled 且本轮进程消失 |
+| A 本人 strace | PASS | strace-record.md，真实 clone→放行→private/hostname/chroot/dev/proc→exec→wait |
+| Agent namespace 探测 | SKIP | Agent clone EPERM，区别于 sudo 原生环境 |
+| openSUSE isolate、cgroup/full | NOT_RUN | 不扩写为双系统完整 V1 通过 |
 
-Agent 原始结果：artifacts/isolation/agent-probe/result.json、artifacts/isolation/missing-rootfs/result.json。原生脚本 verify.py 保存每例 command/SHA/dirty/time/status/result、stdout/stderr 和 namespace 对照到 artifacts/isolation/native。strace 注入 mount EPERM 是模拟故障，单独标注；不替代真实能力通过。
+两轮失败与实际修复见 first-native-run.md：BusyBox 后台任务需要 /dev/null；仅重定向不足，补私有设备后原生 8 项通过。旧 artifacts 保留，没有覆盖或隐藏失败。原生结果 artifacts/isolation/native-20261031-162650；本人 trace 在 artifacts/isolation/manual；精选证据已提交文档，不提交大量原始资产。
 
-## 普通终端接续
+## 交接
 
-先核对 `git rev-parse HEAD` 与当前分支，再执行：
-
-```bash
-sudo python3 docs/evidence/A/isolation/verify.py
-```
-
-该脚本只创建本项目 artifacts 的证据/宿主测试标记，运行本项目 minic，不操作系统配置、不建立 cgroup、不清空其他任务。需要先存在已准备的 .local/isolation-rootfs。若 Rootfs 尚未生成，先运行 `./scripts/prepare-rootfs.sh --output "$PWD/.local/isolation-rootfs"`；已有目标不重复准备。
-
-本人新机制观察只做一次（不重复 GDB）：
-
-```bash
-mkdir -p artifacts/isolation/manual
-sudo strace -ff -o "$PWD/artifacts/isolation/manual/trace" \
-  -e trace=clone,read,write,sendto,recvfrom,mount,sethostname,chroot,chdir,execve,wait4,kill \
-  ./build/debug/minic run --mode isolate --rootfs "$PWD/.local/isolation-rootfs" \
-  --hostname minic-trace --evidence-dir "$PWD/artifacts/isolation/manual" -- /bin/hostname
-```
-
-观察 clone 三个 namespace 标志、子进程控制读/父放行、private mount/hostname/chroot/chdir/proc、execve、父 wait4 的顺序。trace 多文件按 PID 区分，暂不声称已完成。回传脚本末行、verification.json 和 strace 关键片段后记录实测结论。
-
-## 未完成
-
-原生验收、本人 strace、B 审查、PR 和合并均未完成。不能宣称隔离技术验收通过；不开始 full 集成。提交后报告实际被测 SHA，纯文档不重复全套测试。11-02 起冻结新增功能。
-
-原生复验进展：两轮均在 SIGINT 用例准备阶段发现 Rootfs 缺少 /dev/null，尚未测到中断；详见 first-native-run.md。Runtime 已补子 namespace 临时 /dev/null，待 A 原生复验，不将已有结果扩写为全通过。
+B 审查控制/错误通道、namespace/Rootfs 顺序、栈/fd 生命周期与清理。PR 描述见 pr-body.md；需确保远端包含实际修复 6666478 及最终证据，不能基于旧 b5fab92 宣布通过。未请求合并，不接入 full。11-02 起冻结新增功能。
