@@ -1,6 +1,6 @@
 # S02 阶段报告（A / Ubuntu）
 
-状态：V0 实现及直接编译验证完成；标准 CMake 构建待 B 源登记，本人 GDB 待完成，未合并。按 A 明确授权，S01 理解确认保留真实状态但不阻塞开发。不得进入 S03。
+状态：V0 实现及直接编译验证完成；标准 CMake 构建待 B 源登记，本人 GDB 已完成（见 gdb-record.md），未合并。按 A 明确授权，S01 理解确认保留真实状态但不阻塞开发。不得进入 S03。
 
 前置 C01：`22019e8d860464936d21ab3784c6fcf27f070269`（PR #1 合并提交）。开始时 main HEAD=origin/main，工作区干净。用户确认 S01 两机构建与 A 审查完成；没有代签尚未完成的理解确认。
 
@@ -20,6 +20,6 @@
 | CLI SIGINT/SIGTERM、重复 10 次 | PASS | 有界终止且直接子进程已回收 |
 | 标准 CMake 配置/构建 | NOT_RUN | B 源登记待完成；不可把直接编译冒充此项 |
 | CTest / ASan / openSUSE S02 | NOT_RUN | 不宣称已验证，S03 不提前开始 |
-| A 本人 GDB | NOT_RUN | gdb-guide.md；等本人反馈 |
+| A 本人 GDB | PASS | gdb-record.md；A 回传实际断点、argv、inferiors、bt、exec 及结果检查 |
 
 限制与交接：当前 CMake 未登记新源，标准入口链接会缺定义，B 需按 build-handoff.md 提交最小登记；A 随后标准构建和复验。B 代码审查待完成。无自动合并，C02 未知。V0 仅面向可信、有限、不守护化负载，后代管理不在此阶段范围。报告不声称完整 V1 或阶段最终通过。

@@ -1,6 +1,6 @@
-# S02 A 本人 GDB 练习（待执行）
+# S02 A 本人 GDB 练习指南
 
-Agent 未代本人确认。B 登记 CMake 后优先使用 `build/debug/minic`；此前可使用已带 `-g -O0` 的 `build/s02/minic`，需如实记录构建方式。
+A 已亲手完成本次练习，实际过程见 [GDB 实验记录](gdb-record.md)。下文保留原操作指南，其中日志命令不是本次实际执行记录。Agent 未代本人操作。B 登记 CMake 后优先使用 `build/debug/minic`；此前可使用已带 `-g -O0` 的 `build/s02/minic`，需如实记录构建方式。
 
 在仓库根目录亲手执行：
 
