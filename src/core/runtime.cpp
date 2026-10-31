@@ -12,6 +12,12 @@
 #include <chrono>
 #include <iostream>
 #include <limits.h>
+#include <sched.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/socket.h>
+#include <fstream>
 
 namespace minic {
 namespace {
@@ -54,6 +60,51 @@ bool write_record(int fd, Record record) {
     write_record(error_fd, {3, e});
     _exit(e == ENOENT || e == ENOTDIR ? 127 : 126);
 }
+struct IsolateContext {
+    int control_fd, error_fd;
+    char* const* argv;
+    const sigset_t* mask;
+    long max_fd;
+    const char* rootfs;
+    const char* hostname;
+    std::size_t hostname_size;
+};
+int isolate_child_entry(void* opaque) {
+    const auto& c = *static_cast<IsolateContext*>(opaque);
+    auto failure = [&](int stage) {
+        int e = errno; write_record(c.error_fd, {stage, e}); _exit(125);
+    };
+    // Close host directory and unrelated descriptors before chroot; retain only protocol ends.
+    for (long fd = 3; fd < c.max_fd; ++fd)
+        if (fd != c.control_fd && fd != c.error_fd) close(static_cast<int>(fd));
+    char token = 0;
+    ssize_t n;
+    do { n = read(c.control_fd, &token, 1); } while (n < 0 && errno == EINTR);
+    if (n != 1 || token != 'G') {
+        int e = n < 0 ? errno : EPROTO; write_record(c.error_fd, {4, e}); _exit(125);
+    }
+    close(c.control_fd);
+    // Open stdin before entering a minimal Rootfs, which need not contain device nodes.
+    int null_fd = open("/dev/null", O_RDONLY);
+    if (null_fd < 0) failure(2);
+    if (dup2(null_fd, STDIN_FILENO) < 0) failure(2);
+    if (null_fd != STDIN_FILENO) close(null_fd);
+    if (mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) < 0) failure(5);
+    if (sethostname(c.hostname, c.hostname_size) < 0) failure(6);
+    if (chroot(c.rootfs) < 0) failure(7);
+    if (chdir("/") < 0) failure(7);
+    if (!write_record(c.error_fd, {10, 0})) _exit(125);
+    // A private ephemeral /dev supports shell background jobs without host bind mounts.
+    if (mount("minic-dev", "/dev", "tmpfs", MS_NOSUID | MS_NOEXEC, "mode=0755,size=64k") < 0) failure(7);
+    if (mknod("/dev/null", S_IFCHR | 0666, makedev(1, 3)) < 0) failure(7);
+    if (chmod("/dev/null", 0666) < 0) failure(7);
+    if (mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, nullptr) < 0) failure(8);
+    if (sigprocmask(SIG_SETMASK, c.mask, nullptr) < 0) failure(2);
+    if (!write_record(c.error_fd, {1, 0})) _exit(125);
+    execvp(c.argv[0], c.argv);
+    int e = errno; write_record(c.error_fd, {3, e});
+    _exit(e == ENOENT || e == ENOTDIR ? 127 : 126);
+}
 struct MaskGuard {
     sigset_t old{};
     bool active = false;
@@ -67,17 +118,38 @@ RunResult Runtime::run(const RunConfig& config) {
     auto fail = [&](const char* step, int e, const char* message) {
         if (!result.primary_error) result.primary_error = Error{step, e, message};
     };
-    if (config.mode != RunMode::v0 || config.argv.empty() || config.argv[0].empty() ||
-        !config.evidence_dir.is_absolute() || !config.rootfs.empty() ||
-        !config.hostname.empty() || !config.cgroup_base.empty() || config.limits.memory_bytes ||
-        config.limits.swap_max_bytes || config.limits.cpu_quota_us || config.limits.cpu_period_us != 100000) {
-        fail("validate", 0, "S02 requires v0, nonempty argv, absolute evidence directory and no isolation/limits");
+    const bool isolate = config.mode == RunMode::isolate;
+    if ((config.mode != RunMode::v0 && !isolate) || config.argv.empty() || config.argv[0].empty() ||
+        !config.evidence_dir.is_absolute() || !config.cgroup_base.empty() || config.limits.memory_bytes ||
+        config.limits.swap_max_bytes || config.limits.cpu_quota_us || config.limits.cpu_period_us != 100000 ||
+        (!isolate && (!config.rootfs.empty() || !config.hostname.empty()))) {
+        fail("validate", 0, "requires v0/isolate, argv, absolute evidence directory and no resource limits");
         return result;
     }
     for (const auto& arg : config.argv) if (arg.find('\0') != std::string::npos) {
         fail("validate", 0, "argv contains NUL"); return result;
     }
-    std::cerr << "V0 非隔离运行；非完整 V1\n";
+    std::string rootfs;
+    if (isolate) {
+        if (!config.rootfs.is_absolute() || config.hostname.empty() || config.hostname.size() > 64 ||
+            config.hostname.find('\0') != std::string::npos) {
+            fail("validate", 0, "isolate requires absolute rootfs and hostname of 1..64 bytes"); return result;
+        }
+        std::error_code ec;
+        auto canonical = std::filesystem::canonical(config.rootfs, ec);
+        if (ec) { fail("rootfs", ec.value(), "cannot resolve Rootfs"); return result; }
+        std::ifstream marker(canonical / ".minic-rootfs");
+        std::string tag; std::getline(marker, tag);
+        if (canonical == "/" || tag != "minic-rootfs-v1" ||
+            !std::filesystem::is_directory(canonical / "dev", ec) || ec ||
+            std::filesystem::is_symlink(canonical / "dev", ec) || ec ||
+            !std::filesystem::is_directory(canonical / "proc", ec) || ec ||
+            std::filesystem::is_symlink(canonical / "proc", ec) || ec) {
+            fail("rootfs", 0, "requires dedicated marked Rootfs and real dev/proc directories"); return result;
+        }
+        rootfs = canonical.string();
+    }
+    std::cerr << (isolate ? "isolate PID/UTS/Mount/Rootfs；无 cgroup，非完整 V1\n" : "V0 非隔离运行；非完整 V1\n");
     std::vector<char*> args;
     for (const auto& arg : config.argv) args.push_back(const_cast<char*>(arg.c_str()));
     args.push_back(nullptr);
@@ -98,16 +170,38 @@ RunResult Runtime::run(const RunConfig& config) {
     writer.reset(elevated);
     long max_fd = sysconf(_SC_OPEN_MAX);
     if (max_fd < 0) { fail("validate", errno, "open descriptor limit"); return result; }
-    pid_t pid = fork();
-    if (pid < 0) { int e = errno; fail("fork", e, "fork"); return result; }
-    if (pid == 0) v0_child_exec(writer.get(), args.data(), mask.old, max_fd);
+    // socketpair is the parent-to-child control pipe; MSG_NOSIGNAL avoids process-wide SIGPIPE changes.
+    Fd control_parent, control_child;
+    if (isolate) {
+        int control[2];
+        if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, control) < 0) {
+            int e = errno; fail("pipe", e, "control channel"); return result;
+        }
+        control_parent.reset(control[0]); control_child.reset(control[1]);
+    }
+    std::vector<char> clone_stack(isolate ? 1024 * 1024 : 0);
+    IsolateContext context{control_child.get(), writer.get(), args.data(), &mask.old, max_fd,
+                           rootfs.c_str(), config.hostname.c_str(), config.hostname.size()};
+    pid_t pid = isolate ? clone(isolate_child_entry, clone_stack.data() + clone_stack.size(),
+                               CLONE_NEWPID | CLONE_NEWUTS | CLONE_NEWNS | SIGCHLD, &context) : fork();
+    if (pid < 0) { int e = errno; fail(isolate ? "clone" : "fork", e, "create child"); return result; }
+    if (!isolate && pid == 0) v0_child_exec(writer.get(), args.data(), mask.old, max_fd);
     result.host_pid = pid;
     writer.reset();
+    control_child.reset();
+    int release_error = 0;
+    if (isolate) {
+        result.enabled.pid_namespace = result.enabled.uts_namespace = result.enabled.mount_namespace = true;
+        ssize_t n;
+        do { n = send(control_parent.get(), "G", 1, MSG_NOSIGNAL); } while (n < 0 && errno == EINTR);
+        if (n != 1) { release_error = n < 0 ? errno : EIO; kill(pid, SIGKILL); }
+        control_parent.reset();
+    }
     // No allocations until the direct child has been reaped.
-    Record records[3]{};
+    Record records[8]{};
     std::size_t received = 0;
     bool eof = false, killed = false, reaped = false;
-    int status = 0, io_error = 0, wait_error = 0;
+    int status = 0, io_error = release_error, wait_error = 0;
     while (!reaped || !eof) {
         pollfd fds[2] = {{reader.get(), POLLIN, 0}, {signals.get(), POLLIN, 0}};
         int ready = poll(fds, 2, 50);
@@ -145,12 +239,21 @@ RunResult Runtime::run(const RunConfig& config) {
     else if (io_error || received % sizeof(Record)) fail("sync", io_error ? io_error : EPROTO, "invalid error pipe record");
     else {
         std::size_t count = received / sizeof(Record);
-        bool prepared = count && records[0].stage == 1 && records[0].error == 0;
+        bool prepared = false, protocol_error = false;
         const Record* failure = nullptr;
-        if (count == 1 && records[0].stage == 2) failure = &records[0];
-        else if (count == 2 && prepared && records[1].stage == 3) failure = &records[1];
-        if (failure) fail(failure->stage == 3 ? "exec" : "sync", failure->error, std::strerror(failure->error));
-        else if (!prepared || count != 1) fail("sync", EPROTO, "child died before exec preparation or invalid protocol");
+        for (std::size_t i = 0; i < count; ++i) {
+            const auto& record = records[i];
+            if (record.stage == 10 && isolate && i == 0 && record.error == 0) result.enabled.rootfs = true;
+            else if (record.stage == 1 && !prepared && !failure && record.error == 0 &&
+                     i == (isolate ? 1u : 0u)) prepared = true;
+            else if (record.stage >= 2 && record.stage <= 8 && !failure && record.error > 0 &&
+                     i + 1 == count && ((record.stage == 3) == prepared)) failure = &record;
+            else protocol_error = true;
+        }
+        const char* steps[] = {"sync", "sync", "sync", "exec", "sync", "mount.private", "hostname", "rootfs", "proc"};
+        if (protocol_error) fail("sync", EPROTO, "invalid child protocol");
+        else if (failure) fail(steps[failure->stage], failure->error, std::strerror(failure->error));
+        else if (!prepared) fail("sync", EPROTO, "child died before exec preparation");
         else if (WIFEXITED(status)) {
             result.kind = ResultKind::exited; result.exit_code = WEXITSTATUS(status);
         } else if (WIFSIGNALED(status)) {

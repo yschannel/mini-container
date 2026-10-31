@@ -50,7 +50,10 @@ bool save_result(const RunConfig& c, RunResult& r) {
     out << ",\"signal\":"; number(out, r.signal);
     out << ",\"primary_error\":"; optional_error(out, r.primary_error);
     out << ",\"snapshot_error\":"; optional_error(out, r.snapshot_error);
-    out << ",\"enabled\":{\"pid_namespace\":false,\"uts_namespace\":false,\"mount_namespace\":false,\"rootfs\":false,\"cgroup\":false,"
+    out << ",\"enabled\":{\"pid_namespace\":" << (r.enabled.pid_namespace ? "true" : "false")
+        << ",\"uts_namespace\":" << (r.enabled.uts_namespace ? "true" : "false")
+        << ",\"mount_namespace\":" << (r.enabled.mount_namespace ? "true" : "false")
+        << ",\"rootfs\":" << (r.enabled.rootfs ? "true" : "false") << ",\"cgroup\":false,"
            "\"limits\":{\"memory_bytes\":null,\"swap_max_bytes\":null,\"cpu_quota_us\":null,\"cpu_period_us\":100000}},"
            "\"cleanup\":{\"attempted\":" << (r.cleanup.attempted ? "true" : "false")
         << ",\"complete\":" << (r.cleanup.complete ? "true" : "false") << ",\"errors\":[";
