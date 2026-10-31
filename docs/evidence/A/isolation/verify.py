@@ -12,7 +12,7 @@ import time
 
 repo = Path(__file__).resolve().parents[4]
 os.chdir(repo)
-base = repo / 'artifacts/isolation/native'
+base = repo / 'artifacts/isolation' / ('native-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
 base.mkdir(parents=True, exist_ok=True)
 rootfs = repo / '.local/isolation-rootfs'
 sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
@@ -57,7 +57,7 @@ def run(case, args, rc, kind, step=None, fs=rootfs, prefix=None):
 
 # Runtime validation does not require successful clone.
 run('missing-rootfs',['/bin/true'],125,'startup_error','rootfs',fs=repo/'.local/no-such-isolation-rootfs')
-script = f'hostname; echo PID=$$; ps; ls -a /; test -f /.minic-rootfs; test ! -e {marker}; sleep 3'
+script = f'set -e; hostname; echo PID=$$; ps; ls -a /; test -f /.minic-rootfs; test ! -e {marker}; sleep 3'
 case = 'live'
 cmd = command(case,['/bin/sh','-c',script])
 p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
@@ -94,29 +94,52 @@ if subprocess.run(['strace','-V'],capture_output=True).returncode == 0:
     run('injected-prepare-failure',['/bin/true'],125,'startup_error','mount.private',
         prefix=['strace','-f','-o',str(base/'injected.strace'),'-e','inject=mount:error=EPERM:when=1'])
     rows[-1]['simulation'] = 'strace fault injection of mount EPERM'
+    (base/'verification.json').write_text(json.dumps(rows,indent=2)+'\n')
 for sig in (signal.SIGINT,signal.SIGTERM):
     case = f'interrupt-{sig.name}'
-    cmd = command(case,['/bin/sh','-c','sleep 30 & wait'])
+    # Explicit redirection avoids ash opening a missing Rootfs /dev/null for the async job.
+    cmd = command(case,['/bin/sh','-c','sleep 30 <&0 & wait'])
     p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
     direct = None
     descendants = []
-    for _ in range(200):
-        if p.poll() is not None: break
-        ids = Path(f'/proc/{p.pid}/task/{p.pid}/children').read_text().split()
-        if ids:
-            direct = int(ids[0])
-            nested = Path(f'/proc/{direct}/task/{direct}/children')
-            if nested.exists(): descendants = [int(x) for x in nested.read_text().split()]
-            if descendants: break
-        time.sleep(.01)
-    assert direct and descendants, 'workload did not reach descendant wait'
-    p.send_signal(sig)
-    out,err=p.communicate(timeout=5)
+    try:
+        for _ in range(500):
+            if p.poll() is not None: break
+            try:
+                ids = Path(f'/proc/{p.pid}/task/{p.pid}/children').read_text().split()
+                if ids:
+                    direct = int(ids[0])
+                    nested = Path(f'/proc/{direct}/task/{direct}/children')
+                    if nested.exists(): descendants = [int(x) for x in nested.read_text().split()]
+                    if descendants: break
+            except FileNotFoundError:
+                pass  # Child can exit between the /proc reads; capture its result below.
+            time.sleep(.01)
+        reached_wait = bool(direct and descendants)
+        if p.poll() is None:
+            # Even a readiness failure must terminate and reap our runner/namespace.
+            p.send_signal(sig)
+        out,err=p.communicate(timeout=5)
+    finally:
+        if p.poll() is None:
+            p.send_signal(signal.SIGTERM)
+            try:
+                out,err=p.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Kill only the known direct namespace init, allowing its parent to reap it.
+                if direct:
+                    try: os.kill(direct, signal.SIGKILL)
+                    except ProcessLookupError: pass
+                out,err=p.communicate(timeout=5)
     data=json.loads((base/case/'result.json').read_text())
-    ok = p.returncode == 137 and data['kind'] == 'signaled' and data['cleanup']['complete']
-    assert not any(Path(f'/proc/{pid}').exists() for pid in [direct,*descendants]), 'namespace descendants remain'
-    record(case,cmd,p.returncode,data,'SIGKILL namespace init, all descendants gone', 'PASS' if ok else 'FAIL')
-    assert ok,(err,data)
+    (base/case/'stdout.log').write_text(out)
+    (base/case/'stderr.log').write_text(err)
+    ok = reached_wait and p.returncode == 137 and data['kind'] == 'signaled' and data['cleanup']['complete']
+    gone = not any(Path(f'/proc/{pid}').exists() for pid in ([direct] if direct else []) + descendants)
+    ok = ok and gone
+    record(case,cmd,p.returncode,data,'workload reached descendant wait; interrupt kills namespace init and all descendants', 'PASS' if ok else 'FAIL')
+    assert ok, (case, 'reached_wait', reached_wait, 'processes_gone', gone, err, data)
+
 assert os.uname().nodename == hostname and Path('/proc/self/mountinfo').read_text() == mounts
 (base/'verification.json').write_text(json.dumps(rows,indent=2)+'\n')
 print(f'{len(rows)} cases PASS; injected case marked simulation; {base}/verification.json')
