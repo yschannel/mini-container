@@ -57,7 +57,7 @@ def run(case, args, rc, kind, step=None, fs=rootfs, prefix=None):
 
 # Runtime validation does not require successful clone.
 run('missing-rootfs',['/bin/true'],125,'startup_error','rootfs',fs=repo/'.local/no-such-isolation-rootfs')
-script = f'set -e; hostname; echo PID=$$; ps; ls -a /; test -f /.minic-rootfs; test ! -e {marker}; sleep 3'
+script = f'set -e; test -c /dev/null; echo null-check >/dev/null; hostname; echo PID=$$; ps; ls -a /; test -f /.minic-rootfs; test ! -e {marker}; sleep 3'
 case = 'live'
 cmd = command(case,['/bin/sh','-c',script])
 p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
@@ -97,7 +97,7 @@ if subprocess.run(['strace','-V'],capture_output=True).returncode == 0:
     (base/'verification.json').write_text(json.dumps(rows,indent=2)+'\n')
 for sig in (signal.SIGINT,signal.SIGTERM):
     case = f'interrupt-{sig.name}'
-    # Explicit redirection avoids ash opening a missing Rootfs /dev/null for the async job.
+    # Exercise ash background jobs against the private Rootfs /dev/null device.
     cmd = command(case,['/bin/sh','-c','sleep 30 <&0 & wait'])
     p = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
     direct = None

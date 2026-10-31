@@ -14,6 +14,8 @@
 #include <limits.h>
 #include <sched.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/socket.h>
 #include <fstream>
 
@@ -92,6 +94,10 @@ int isolate_child_entry(void* opaque) {
     if (chroot(c.rootfs) < 0) failure(7);
     if (chdir("/") < 0) failure(7);
     if (!write_record(c.error_fd, {10, 0})) _exit(125);
+    // A private ephemeral /dev supports shell background jobs without host bind mounts.
+    if (mount("minic-dev", "/dev", "tmpfs", MS_NOSUID | MS_NOEXEC, "mode=0755,size=64k") < 0) failure(7);
+    if (mknod("/dev/null", S_IFCHR | 0666, makedev(1, 3)) < 0) failure(7);
+    if (chmod("/dev/null", 0666) < 0) failure(7);
     if (mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, nullptr) < 0) failure(8);
     if (sigprocmask(SIG_SETMASK, c.mask, nullptr) < 0) failure(2);
     if (!write_record(c.error_fd, {1, 0})) _exit(125);
@@ -135,9 +141,11 @@ RunResult Runtime::run(const RunConfig& config) {
         std::ifstream marker(canonical / ".minic-rootfs");
         std::string tag; std::getline(marker, tag);
         if (canonical == "/" || tag != "minic-rootfs-v1" ||
+            !std::filesystem::is_directory(canonical / "dev", ec) || ec ||
+            std::filesystem::is_symlink(canonical / "dev", ec) || ec ||
             !std::filesystem::is_directory(canonical / "proc", ec) || ec ||
             std::filesystem::is_symlink(canonical / "proc", ec) || ec) {
-            fail("rootfs", 0, "requires dedicated marked Rootfs and real proc directory"); return result;
+            fail("rootfs", 0, "requires dedicated marked Rootfs and real dev/proc directories"); return result;
         }
         rootfs = canonical.string();
     }

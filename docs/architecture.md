@@ -7,7 +7,7 @@ CLI → Runtime → v0 或 isolate → 可信非交互负载。full 尚未接通
 - v0：fork/exec 宿主程序，保留原有错误分类和回收。
 - isolate：clone 独立 1 MiB 回调栈，PID/UTS/Mount 三个 namespace，无共享 VM/文件表。父进程保持栈、参数、控制端和错误读端到子进程回收。
 - 子进程先关无关 fd，等控制通道明确 G 字节；父端消失、EOF 或错误则不执行负载。控制通道是 socketpair 的单向使用，MSG_NOSIGNAL 避免改变全局 SIGPIPE 处置。
-- 放行后设置 /dev/null stdin，挂载传播 private、hostname、专用 Rootfs/chroot/chdir /、新 proc，再 exec。stdout/stderr 继承终端。
+- 放行后设置 /dev/null stdin，挂载传播 private、hostname、专用 Rootfs/chroot/chdir /、临时 tmpfs /dev 中的 null 字符设备、新 proc，再 exec。/dev 使用独立挂载，不绑定宿主设备目录，也不在 Rootfs 资产中遗留节点。stdout/stderr 继承终端。
 - CLOEXEC 错误管道报告准备/exec 步骤及 errno。EOF 结合准备记录和 wait 状态分类，不独立当成功。enabled 记录实际启用的 namespace/Rootfs，cgroup 和可选限额为空。
 - 父进程通过 signalfd 在正常控制流处理中断，必要时 SIGKILL 自己的 namespace init，再 wait。namespace PID 1 的后代生命周期和 namespace 内挂载由内核终止/释放，Rootfs 文件资产保留。
 

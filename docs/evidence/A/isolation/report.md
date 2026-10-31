@@ -51,3 +51,5 @@ sudo strace -ff -o "$PWD/artifacts/isolation/manual/trace" \
 ## 未完成
 
 原生验收、本人 strace、B 审查、PR 和合并均未完成。不能宣称隔离技术验收通过；不开始 full 集成。提交后报告实际被测 SHA，纯文档不重复全套测试。11-02 起冻结新增功能。
+
+原生复验进展：两轮均在 SIGINT 用例准备阶段发现 Rootfs 缺少 /dev/null，尚未测到中断；详见 first-native-run.md。Runtime 已补子 namespace 临时 /dev/null，待 A 原生复验，不将已有结果扩写为全通过。
