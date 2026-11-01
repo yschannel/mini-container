@@ -5,7 +5,7 @@
 /.codex/
 /.aws/
 *.core
-core
+/core
 # Local Rootfs assets and credentials
 /rootfs/
 /Rootfs/
