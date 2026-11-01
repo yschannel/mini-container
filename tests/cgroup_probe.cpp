@@ -4,6 +4,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdint>
+#include <climits>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -96,7 +97,9 @@ int main(int argc, char** argv) {
     }
     ::close(gate[0]);
     if (mode == "attach-fail") {
-        auto failure = session.attach(0);
+        // Linux pid_max is below INT_MAX, so this reaches the kernel attach
+        // write and exercises its ESRCH path rather than local validation.
+        auto failure = session.attach(INT_MAX);
         ::close(gate[1]);
         int blocked_exit = wait_child(child);
         auto cleanup = session.cleanup();
