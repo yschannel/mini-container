@@ -16,3 +16,8 @@ CLI → Runtime → v0 或 isolate → 可信非交互负载。full 尚未接通
 Rootfs 准备脚本只写项目 .local 中专用新目录，验证静态 BusyBox 架构/链接，不删除既有资产。隔离执行需实际 namespace/mount 权限；Agent EPERM 与普通终端 sudo 结果分别记录。
 
 当前验证与限制见 docs/evidence/A/isolation/report.md。资源模块未接通，后续 full 才加入先创建/设置/attach cgroup 再放行的编排，不提前引用 B 的未完成实现。
+
+
+## A-2 集成分支 full
+
+集成分支已取入 B d3ba16d 的真实 cgroup 库：clone 阻塞子进程→create 设置/读回→attach→G 放行→隔离/exec→wait→snapshot→cleanup→JSON。失败不降级，主错误和收尾错误独立。main 原生 full 验收尚未完成，具体候选与状态以 evidence/A/integration/report.md 为准。
