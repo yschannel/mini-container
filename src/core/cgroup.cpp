@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstring>
 #include <fcntl.h>
+#include <climits>
 #include <linux/magic.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -144,6 +145,11 @@ Outcome<CgroupSession> CgroupSession::create(const std::filesystem::path& base,
 Status CgroupSession::attach(pid_t host_pid) {
     if (!impl_ || !impl_->owns || host_pid <= 0)
         return error("cgroup.attach", "invalid session or PID", 0);
+#ifdef MINIC_TEST_ATTACH_REJECTION
+    // Test-only binary: ask the real kernel to reject an impossible PID while
+    // Runtime's actual child remains blocked on its release socket.
+    host_pid = INT_MAX;
+#endif
     auto status = write_file(impl_->path / "cgroup.procs", std::to_string(host_pid), "cgroup.attach");
     if (std::holds_alternative<Error>(status)) return status;
     auto members = read_file(impl_->path / "cgroup.procs", "cgroup.attach");

@@ -65,7 +65,30 @@ if [[ ${1:-} == --inside ]]; then
     exit "$status"
 fi
 
-[[ $# == 2 && ${1:-} == --probe ]] || die 'usage: ./scripts/with-delegation.sh --probe smoke|attach-fail|baseline|cpu|memory|all'
+if [[ ${1:-} == --acceptance-inside ]]; then
+    [[ $# == 2 && $2 =~ ^minic-b3-[0-9]+-[0-9]+\.scope$ ]] || die 'invalid acceptance scope'
+    [[ $(id -u) == 0 ]] || die 'acceptance scope needs root'
+    relative=$(sed -n 's/^0:://p' /proc/self/cgroup)
+    [[ ${relative##*/} == "$2" ]] || die 'outside expected acceptance scope'
+    project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+    exec python3 "$project_dir/tests/full_acceptance.py"
+fi
+
+if [[ ${1:-} == --acceptance && $# == 1 ]]; then
+    [[ $(id -u) != 0 ]] || die 'invoke as normal user'
+    script=$(readlink -f -- "${BASH_SOURCE[0]}")
+    project_dir=$(cd -- "$(dirname -- "$script")/.." && pwd -P)
+    rootfs=$project_dir/.local/isolation-rootfs
+    [[ -f $rootfs/.minic-rootfs && -x $rootfs/bin/sh && -x $rootfs/bin/minic-workload ]] ||
+        die "prepare Rootfs and workload first: ./scripts/prepare-rootfs.sh --output '$rootfs' && ./scripts/build-rootfs-workloads.sh --rootfs '$rootfs'"
+    [[ -x $project_dir/build/debug/minic && -x $project_dir/build/debug/minic_attach_rejection ]] ||
+        die 'build Debug targets first: cmake --build build/debug -j2'
+    unit=minic-b3-$(date +%s)-$$.scope
+    exec sudo systemd-run --system --scope --unit="$unit" \
+        --property='Delegate=cpu memory' --same-dir "$script" --acceptance-inside "$unit"
+fi
+
+[[ $# == 2 && ${1:-} == --probe ]] || die 'usage: ./scripts/with-delegation.sh --acceptance | --probe smoke|attach-fail|baseline|cpu|memory|all'
 mode=$2
 [[ $mode == smoke || $mode == attach-fail || $mode == baseline || $mode == cpu || $mode == memory || $mode == all ]] || die 'unknown probe mode'
 [[ $(id -u) != 0 ]] || die 'invoke as normal user; this script calls sudo for systemd-run'
