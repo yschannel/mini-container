@@ -7,9 +7,9 @@
 int main(int argc, char* argv[]) {
     try {
         if (argc == 2 && std::string(argv[1]) == "--help") {
-            std::cout << "Usage: minic run --mode v0 --evidence-dir PATH -- PROGRAM ARGS...\n"
+            std::cout << "Usage: minic run --mode v0|isolate --rootfs PATH --hostname NAME --evidence-dir PATH -- PROGRAM ARGS...\n"
                          "S02: V0 非隔离运行，非完整 V1; stdin=/dev/null.\n"
-                         "namespace/Rootfs/cgroup are not implemented.\n"; return 0;
+                         "isolate supports PID/UTS/Mount/Rootfs; full/cgroup unavailable.\n"; return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--version") {
             std::cout << "minic 0.0.0 (S02 V0)\n"; return 0;
@@ -29,7 +29,9 @@ int main(int argc, char* argv[]) {
                 else if (mode == "full") config.mode = minic::RunMode::full;
                 else parse_error = "invalid mode";
             } else if (option == "--evidence-dir") config.evidence_dir = std::filesystem::absolute(argv[++i]);
-            else parse_error = "unsupported option in S02: " + option;
+            else if (option == "--rootfs") config.rootfs = argv[++i];
+            else if (option == "--hostname") config.hostname = argv[++i];
+            else parse_error = "unsupported option: " + option;
         }
         for (; i < argc; ++i) config.argv.emplace_back(argv[i]);
         minic::RunResult result;

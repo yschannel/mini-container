@@ -30,3 +30,10 @@ S01：A 已审查并在 GitHub 合并 PR #1；两机构建通过（用户确认�
 S02：A 在 `a/s02-v0-runtime` 实现 V0；公共头未改动。仅 fork/exec/错误管道/wait/结果输出，不实现 namespace、Rootfs、cgroup。B 的 CMake 源登记、A 本人 GDB 与 B 审查待完成；C02 待合并后填写。S03–S10 NOT_RUN。
 
 仓库 yschannel/mini-container；A yschannel / Ubuntu，B Blonisco / openSUSE。汇报 2026-11-04，功能冻结 2026-11-02。
+
+
+## 新版并行流程接续（2026-10-31）
+
+以 Git 历史及 V1_ACCELERATED_WORKFLOW.md 为准：S02 已合并，真实 C02=`3d467120786dce63b841820c60dd7e9c4e99eb4e`，A 已确认 Ubuntu 标准构建/CTest 和本人 GDB 完成。上方旧待办文字保留作历史，不再阻塞新阶段。
+
+A-1：a/v1-isolation，从 C02 开发隔离/Rootfs/同步/清理；标准构建与受影响 V0 回归通过，Agent clone EPERM 单列 SKIP；实现 66664782a71de911c9e5cd92e561e4c46e8ad1cb 在 A 普通终端原生 8 项检查通过（其中准备失败为模拟注入），新机制本人 strace 已完成；待最后修复/证据推送与 B 审查。B 独立推进资源模块；不要求固定模块合并顺序，不开始 full 集成。详细交接见 evidence/A/isolation/report.md。
