@@ -53,12 +53,12 @@ def run(case,argv,status,kind,mode='full',cgroup=jobs,step=None,binary='minic'):
     (output/case/'stdout.log').write_text(out)
     (output/case/'stderr.log').write_text(err)
     ok=p.returncode==status and result['kind']==kind and result['cleanup']['complete']
-    if step: ok=ok and result['primary_error']['step']==step
+    if step: ok=ok and (result.get('primary_error') or {}).get('step')==step
     if mode=='full' and not step:
-        ok=ok and result['enabled']['cgroup'] and result['snapshot'] is not None
-        files=result['snapshot']['files']
-        ok=ok and files['memory.max'].strip()=='67108864' and files['cpu.max'].strip()=='20000 100000'
-        ok=ok and files['memory.swap.max'].strip()=='0'
+        files=(result.get('snapshot') or {}).get('files',{})
+        ok=ok and result['enabled']['cgroup'] and bool(files)
+        ok=ok and files.get('memory.max','').strip()=='67108864' and files.get('cpu.max','').strip()=='20000 100000'
+        ok=ok and files.get('memory.swap.max','').strip()=='0'
     if result['snapshot']: ok=ok and not Path(result['snapshot']['path']).exists()
     if result['host_pid']: ok=ok and not Path(f"/proc/{result['host_pid']}").exists()
     ok=ok and os.uname().nodename==hostname and Path('/proc/self/mountinfo').read_text()==mounts

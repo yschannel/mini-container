@@ -77,6 +77,12 @@ fi
 if [[ ${1:-} == --acceptance && $# == 1 ]]; then
     [[ $(id -u) != 0 ]] || die 'invoke as normal user'
     script=$(readlink -f -- "${BASH_SOURCE[0]}")
+    project_dir=$(cd -- "$(dirname -- "$script")/.." && pwd -P)
+    rootfs=$project_dir/.local/isolation-rootfs
+    [[ -f $rootfs/.minic-rootfs && -x $rootfs/bin/sh && -x $rootfs/bin/minic-workload ]] ||
+        die "prepare Rootfs and workload first: ./scripts/prepare-rootfs.sh --output '$rootfs' && ./scripts/build-rootfs-workloads.sh --rootfs '$rootfs'"
+    [[ -x $project_dir/build/debug/minic && -x $project_dir/build/debug/minic_attach_rejection ]] ||
+        die 'build Debug targets first: cmake --build build/debug -j2'
     unit=minic-b3-$(date +%s)-$$.scope
     exec sudo systemd-run --system --scope --unit="$unit" \
         --property='Delegate=cpu memory' --same-dir "$script" --acceptance-inside "$unit"

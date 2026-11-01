@@ -34,3 +34,9 @@ ctest --test-dir build/debug --output-on-failure
 Rootfs 若已准备且含 `/bin/minic-workload`，跳过两条准备命令。BusyBox 必须是静态链接；若本机只有动态 BusyBox，先安装对应静态包。原始结果保存在 `artifacts/b3/native-*/verification.json`，各 case 目录含 `result.json`、stdout/stderr。测试含 smoke、exit7/125/127、exec 错误、create 和真实内核 attach 拒绝不放行、CPU 限额与节流、OOM、SIGINT/SIGTERM 后代回收；每例检查快照和叶子删除。scope 仅触及本轮 `minic-b3-*` 委派目录。
 
 最终两机完整验收尚未执行；当前不能宣布 V1 通过。任何源码或验收脚本修复都应更新候选 SHA 并重测受影响项。
+
+## openSUSE 首轮原生尝试（失败记录保留）
+
+B 在普通终端对 `ef7c296` 完成 Debug 构建与 CTest 1/1 PASS，随后启动了 `minic-b3-1793525152-92714.scope`。首个 smoke 的原始结果在 `artifacts/b3/native-20261101-172555/smoke/`：`primary_error.step=rootfs`、`errno=2`、`snapshot=null`、`host_pid=null`，原因是当时 `.local/isolation-rootfs` 不存在。旧 runner 在检查 snapshot 时抛出 `TypeError`，没有形成汇总。此轮 full 为 **FAIL（准备条件缺失且 runner 报告缺陷）**，其余 case NOT_RUN；不将 scope 已启动误记为 smoke 通过。
+
+已在本机创建专用静态 BusyBox Rootfs 并安装静态 `minic-workload`。runner 已增加启动前 Rootfs/构建预检，并在 snapshot 为空时记录 FAIL 而非抛出类型错误。需对新候选在普通终端重新执行完整原生验收。
