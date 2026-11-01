@@ -1,0 +1,36 @@
+# B-3 集成审查与验收交接
+
+基线：`origin/main` 的 `0a5ddaa`（含 #4 合并提交 `92ac869` 和 #5 合并提交 `0a5ddaa`）。#4 已合并，因此本轮只审查 full 编排与 B-3 验收，不重复资源模块代码审查。仓库没有 AGENTS.md。
+
+## 集成审查
+
+- `Runtime::run` 在 clone 后让子进程等待控制字节；`FullSession::prepare` 先 create/写限额/读回，再 attach 宿主 PID，成功才发送 `G`。create、attach 或放行前中断失败时关闭控制端并杀死/wait 子进程。测试版 `minic_attach_rejection` 只把 attach PID 改为 `INT_MAX`，由真实内核拒绝；生产 `minic` 无故障入口。
+- wait 后调用 `FullSession::finish`，顺序为 snapshot 再 cleanup。attach 失败仍有会话，会采样再删除叶子；create 的部分写入失败由 `CgroupSession::create` 自行回滚。主错误、snapshot_error、cleanup.errors 独立保存。
+- 发现尚需原生验证的风险：PID namespace init 退出后，后代可能在 cgroup 中短暂滞留，使一次 `rmdir` 返回 `EBUSY`；新的 SIGINT/SIGTERM 测试会捕获这种情况。若复现，给 A 最小故障记录后修复核心，不把 cleanup_error 算 PASS。
+
+## 本轮执行
+
+| 项目 | 状态 | 证据 |
+| --- | --- | --- |
+| Debug 构建、`ctest` V0 | PASS | `cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug -j2 && ctest --test-dir build/debug --output-on-failure`：1/1 通过 |
+| Python 与 shell 语法 | PASS | `python3 -m py_compile tests/full_acceptance.py`；`bash -n scripts/with-delegation.sh` |
+| openSUSE 原生 full、attach 拒绝、中断/后代、CPU/OOM | NOT_RUN | Codex 沙箱 `sudo` 报 `no new privileges`，`/sys/fs/cgroup` 只读；不是 openSUSE 虚拟机能力结论 |
+| Ubuntu 同候选完整验收 | NOT_RUN | A 现有 smoke/错误/CPU/OOM 结果来自旧实现 `d045d59`，可复用背景证据，不能记为本候选验收 |
+| B 人工资源/隔离复现 | NOT_RUN | 未代签人工执行 |
+
+## 普通终端复验
+
+两机 checkout 同一候选 SHA 后，从仓库根目录运行：
+
+```bash
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug -j2
+ctest --test-dir build/debug --output-on-failure
+./scripts/prepare-rootfs.sh --output "$PWD/.local/isolation-rootfs"
+./scripts/build-rootfs-workloads.sh --rootfs "$PWD/.local/isolation-rootfs"
+./scripts/with-delegation.sh --acceptance
+```
+
+Rootfs 若已准备且含 `/bin/minic-workload`，跳过两条准备命令。BusyBox 必须是静态链接；若本机只有动态 BusyBox，先安装对应静态包。原始结果保存在 `artifacts/b3/native-*/verification.json`，各 case 目录含 `result.json`、stdout/stderr。测试含 smoke、exit7/125/127、exec 错误、create 和真实内核 attach 拒绝不放行、CPU 限额与节流、OOM、SIGINT/SIGTERM 后代回收；每例检查快照和叶子删除。scope 仅触及本轮 `minic-b3-*` 委派目录。
+
+最终两机完整验收尚未执行；当前不能宣布 V1 通过。任何源码或验收脚本修复都应更新候选 SHA 并重测受影响项。
