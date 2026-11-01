@@ -53,12 +53,27 @@ bool save_result(const RunConfig& c, RunResult& r) {
     out << ",\"enabled\":{\"pid_namespace\":" << (r.enabled.pid_namespace ? "true" : "false")
         << ",\"uts_namespace\":" << (r.enabled.uts_namespace ? "true" : "false")
         << ",\"mount_namespace\":" << (r.enabled.mount_namespace ? "true" : "false")
-        << ",\"rootfs\":" << (r.enabled.rootfs ? "true" : "false") << ",\"cgroup\":false,"
-           "\"limits\":{\"memory_bytes\":null,\"swap_max_bytes\":null,\"cpu_quota_us\":null,\"cpu_period_us\":100000}},"
-           "\"cleanup\":{\"attempted\":" << (r.cleanup.attempted ? "true" : "false")
+        << ",\"rootfs\":" << (r.enabled.rootfs ? "true" : "false")
+        << ",\"cgroup\":" << (r.enabled.cgroup ? "true" : "false") << ",\"limits\":{\"memory_bytes\":";
+    number(out, r.enabled.limits.memory_bytes);
+    out << ",\"swap_max_bytes\":"; number(out, r.enabled.limits.swap_max_bytes);
+    out << ",\"cpu_quota_us\":"; number(out, r.enabled.limits.cpu_quota_us);
+    out << ",\"cpu_period_us\":" << r.enabled.limits.cpu_period_us << "}},\"cleanup\":{\"attempted\":" << (r.cleanup.attempted ? "true" : "false")
         << ",\"complete\":" << (r.cleanup.complete ? "true" : "false") << ",\"errors\":[";
     for (std::size_t i = 0; i < r.cleanup.errors.size(); ++i) { if (i) out << ','; error(out, r.cleanup.errors[i]); }
-    out << "]},\"snapshot\":null,\"evidence_errors\":[]}\n";
+    out << "]},\"snapshot\":";
+    if (r.snapshot) {
+        out << "{\"path\":" << quote(r.snapshot->path.string()) << ",\"files\":{";
+        bool first = true;
+        for (const auto& entry : r.snapshot->files) {
+            if (!first) out << ',';
+            first = false; out << quote(entry.first) << ':' << quote(entry.second);
+        }
+        out << "}}";
+    } else out << "null";
+    out << ",\"evidence_errors\":[";
+    for (std::size_t i = 0; i < r.evidence_errors.size(); ++i) { if (i) out << ','; error(out, r.evidence_errors[i]); }
+    out << "]}\n";
     out.close();
     if (!out) return failed("cannot finish result.json", errno);
     return true;

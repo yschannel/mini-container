@@ -1,4 +1,6 @@
 #include "minic/runtime.hpp"
+#include "minic/cgroup.hpp"
+#include "../common/full_session.hpp"
 #include "../common/fd.hpp"
 #include <cerrno>
 #include <cstring>
@@ -105,6 +107,14 @@ int isolate_child_entry(void* opaque) {
     int e = errno; write_record(c.error_fd, {3, e});
     _exit(e == ENOENT || e == ENOTDIR ? 127 : 126);
 }
+struct ChildGuard {
+    pid_t pid;
+    ~ChildGuard() {
+        if (pid <= 0) return;
+        kill(pid, SIGKILL);
+        while (waitpid(pid, nullptr, 0) < 0 && errno == EINTR) {}
+    }
+};
 struct MaskGuard {
     sigset_t old{};
     bool active = false;
@@ -118,16 +128,25 @@ RunResult Runtime::run(const RunConfig& config) {
     auto fail = [&](const char* step, int e, const char* message) {
         if (!result.primary_error) result.primary_error = Error{step, e, message};
     };
-    const bool isolate = config.mode == RunMode::isolate;
+    const bool full = config.mode == RunMode::full;
+    const bool isolate = config.mode == RunMode::isolate || full;
     if ((config.mode != RunMode::v0 && !isolate) || config.argv.empty() || config.argv[0].empty() ||
-        !config.evidence_dir.is_absolute() || !config.cgroup_base.empty() || config.limits.memory_bytes ||
-        config.limits.swap_max_bytes || config.limits.cpu_quota_us || config.limits.cpu_period_us != 100000 ||
+        !config.evidence_dir.is_absolute() ||
+        (!full && (!config.cgroup_base.empty() || config.limits.memory_bytes ||
+        config.limits.swap_max_bytes || config.limits.cpu_quota_us || config.limits.cpu_period_us != 100000)) ||
         (!isolate && (!config.rootfs.empty() || !config.hostname.empty()))) {
-        fail("validate", 0, "requires v0/isolate, argv, absolute evidence directory and no resource limits");
+        fail("validate", 0, "requires argv, absolute evidence directory, and resource limits only in full");
         return result;
     }
     for (const auto& arg : config.argv) if (arg.find('\0') != std::string::npos) {
         fail("validate", 0, "argv contains NUL"); return result;
+    }
+    if (full && (!config.cgroup_base.is_absolute() || !config.limits.memory_bytes ||
+        *config.limits.memory_bytes == 0 || !config.limits.cpu_quota_us ||
+        *config.limits.cpu_quota_us == 0 || config.limits.cpu_period_us < 1000 ||
+        config.limits.cpu_period_us > 1000000)) {
+        fail("validate", 0, "full requires absolute delegated base, positive memory/CPU and CPU period 1000..1000000 us");
+        return result;
     }
     std::string rootfs;
     if (isolate) {
@@ -149,7 +168,7 @@ RunResult Runtime::run(const RunConfig& config) {
         }
         rootfs = canonical.string();
     }
-    std::cerr << (isolate ? "isolate PID/UTS/Mount/Rootfs；无 cgroup，非完整 V1\n" : "V0 非隔离运行；非完整 V1\n");
+    std::cerr << (full ? "full：隔离与本轮请求的全部 cgroup 限额\n" : isolate ? "isolate PID/UTS/Mount/Rootfs；无 cgroup，非完整 V1\n" : "V0 非隔离运行；非完整 V1\n");
     std::vector<char*> args;
     for (const auto& arg : config.argv) args.push_back(const_cast<char*>(arg.c_str()));
     args.push_back(nullptr);
@@ -182,20 +201,44 @@ RunResult Runtime::run(const RunConfig& config) {
     std::vector<char> clone_stack(isolate ? 1024 * 1024 : 0);
     IsolateContext context{control_child.get(), writer.get(), args.data(), &mask.old, max_fd,
                            rootfs.c_str(), config.hostname.c_str(), config.hostname.size()};
+    detail::FullSession<CgroupSession> cgroup;
     pid_t pid = isolate ? clone(isolate_child_entry, clone_stack.data() + clone_stack.size(),
                                CLONE_NEWPID | CLONE_NEWUTS | CLONE_NEWNS | SIGCHLD, &context) : fork();
     if (pid < 0) { int e = errno; fail(isolate ? "clone" : "fork", e, "create child"); return result; }
     if (!isolate && pid == 0) v0_child_exec(writer.get(), args.data(), mask.old, max_fd);
+    ChildGuard child{pid};
     result.host_pid = pid;
     writer.reset();
     control_child.reset();
     int release_error = 0;
+    bool allow_release = true;
+    if (full) {
+        try {
+            auto error = cgroup.prepare(config, result, pid);
+            if (error) { result.primary_error = std::move(*error); allow_release = false; }
+        } catch (const std::exception& e) {
+            result.primary_error = Error{"cgroup.create", 0, e.what()}; allow_release = false;
+        }
+    }
+    // Consume pending CLI termination before release: never execute a cancelled workload.
+    signalfd_siginfo pending{};
+    ssize_t pending_size;
+    do { pending_size = read(signals.get(), &pending, sizeof(pending)); } while (pending_size < 0 && errno == EINTR);
+    if (pending_size == sizeof(pending)) {
+        fail("sync", EINTR, "interrupted before release"); allow_release = false;
+    } else if (pending_size < 0 && errno != EAGAIN) {
+        int e = errno; fail("sync", e, "read pending signal"); allow_release = false;
+    }
     if (isolate) {
         result.enabled.pid_namespace = result.enabled.uts_namespace = result.enabled.mount_namespace = true;
         ssize_t n;
-        do { n = send(control_parent.get(), "G", 1, MSG_NOSIGNAL); } while (n < 0 && errno == EINTR);
-        if (n != 1) { release_error = n < 0 ? errno : EIO; kill(pid, SIGKILL); }
+        n = 0;
+        if (allow_release) do { n = send(control_parent.get(), "G", 1, MSG_NOSIGNAL); } while (n < 0 && errno == EINTR);
+        if (allow_release && n != 1) { release_error = n < 0 ? errno : EIO; kill(pid, SIGKILL); }
         control_parent.reset();
+        if (!allow_release && kill(pid, SIGKILL) < 0 && errno != ESRCH) release_error = errno;
+    } else if (!allow_release) {
+        if (kill(pid, SIGKILL) < 0 && errno != ESRCH) release_error = errno;
     }
     // No allocations until the direct child has been reaped.
     Record records[8]{};
@@ -203,7 +246,7 @@ RunResult Runtime::run(const RunConfig& config) {
     bool eof = false, killed = false, reaped = false;
     int status = 0, io_error = release_error, wait_error = 0;
     while (!reaped || !eof) {
-        pollfd fds[2] = {{reader.get(), POLLIN, 0}, {signals.get(), POLLIN, 0}};
+        pollfd fds[2] = {{eof ? -1 : reader.get(), POLLIN, 0}, {signals.get(), POLLIN, 0}};
         int ready = poll(fds, 2, 50);
         if (ready < 0 && errno != EINTR) { io_error = errno; eof = true; }
         if (fds[1].revents & POLLIN) {
@@ -232,10 +275,15 @@ RunResult Runtime::run(const RunConfig& config) {
             else if (waited < 0 && errno != EINTR) { wait_error = errno; reaped = true; eof = true; }
         }
     }
+    child.pid = -1;
     reader.reset(); signals.reset();
     result.cleanup.attempted = true;
     result.cleanup.complete = wait_error == 0;
-    if (wait_error) fail("wait", wait_error, "waitpid");
+    if (wait_error) {
+        if (result.primary_error) result.cleanup.errors.push_back({"wait", wait_error, "waitpid"});
+        else fail("wait", wait_error, "waitpid");
+    }
+    else if (result.primary_error) {} // Preserve cgroup/cancellation failure over child shutdown errors.
     else if (io_error || received % sizeof(Record)) fail("sync", io_error ? io_error : EPROTO, "invalid error pipe record");
     else {
         std::size_t count = received / sizeof(Record);
@@ -260,6 +308,7 @@ RunResult Runtime::run(const RunConfig& config) {
             result.kind = ResultKind::signaled; result.signal = WTERMSIG(status);
         } else fail("wait", 0, "unexpected child status");
     }
+    if (full) cgroup.finish(result);
     return result;
 }
 }
