@@ -40,3 +40,11 @@ Rootfs 若已准备且含 `/bin/minic-workload`，跳过两条准备命令。Bus
 B 在普通终端对 `ef7c296` 完成 Debug 构建与 CTest 1/1 PASS，随后启动了 `minic-b3-1793525152-92714.scope`。首个 smoke 的原始结果在 `artifacts/b3/native-20261101-172555/smoke/`：`primary_error.step=rootfs`、`errno=2`、`snapshot=null`、`host_pid=null`，原因是当时 `.local/isolation-rootfs` 不存在。旧 runner 在检查 snapshot 时抛出 `TypeError`，没有形成汇总。此轮 full 为 **FAIL（准备条件缺失且 runner 报告缺陷）**，其余 case NOT_RUN；不将 scope 已启动误记为 smoke 通过。
 
 已在本机创建专用静态 BusyBox Rootfs 并安装静态 `minic-workload`。runner 已增加启动前 Rootfs/构建预检，并在 snapshot 为空时记录 FAIL 而非抛出类型错误。需对新候选在普通终端重新执行完整原生验收。
+
+## openSUSE 复验：实现候选 `97800f0244b807466e7c516021f3c40b882abf45`
+
+B 在普通终端执行 `git switch --detach 97800f0` 后运行 `./scripts/with-delegation.sh --acceptance`。scope 为 `minic-b3-1793525422-96297.scope`；原始记录在 `artifacts/b3/native-20261101-173022/verification.json`，12 项的 `sha=97800f0`、`dirty=false`、状态均 PASS：smoke、exit7、exit125、exit127、missing、create-failure、attach-failure、cpu-baseline、cpu-limited、memory-oom、interrupt-sigint、interrupt-sigterm。先前 Debug 构建和 CTest 1/1 PASS 已由 B 同机执行。
+
+关键原始值：attach-failure 为 `startup_error/cgroup.attach`、退出 125、`enabled.cgroup=false`，Rootfs 的负载标记未出现，失败会话仍有 snapshot 且叶子已删除；CPU 限额读回 `20000 100000`，`usage_usec=1010618`、`nr_throttled=50`、`throttled_usec=3988902`；内存用例 `oom_kill=1`、signal 9。SIGINT 运行期成员 `96469/96470`，SIGTERM 为 `96472/96473`，两例均在 CLI 结束后消失，snapshot 叶子不存在，cleanup.complete=true。scope 退出后路径亦不存在。每例另存 `result.json`、stdout/stderr。
+
+这确认了 **openSUSE 在该实现候选上的已覆盖原生用例通过**。Ubuntu 尚未对相同 SHA 跑统一入口，最终双机验收仍为 NOT_RUN；B 人工资源/隔离学习记录也尚未补齐。此处文档更新不改变被测实现。
