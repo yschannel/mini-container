@@ -2,6 +2,28 @@
 
 
 
+## 当前总结（2026-11-02，A-3汇报收口）
+
+当前材料基线main：`25cf83acb7bfe080e12c1eb19d4318721f7fb109`，PR #6已合并。两机实际被测实现/统一验收脚本：`97800f0244b807466e7c516021f3c40b882abf45`。源码、公共头、测试、脚本和CMake在这两个提交间没有差异，后续仅证据文档；不冒称合并提交重新验收。
+
+| 工作 | 当前结论 / 记录 |
+|---|---|
+| S02/B-1基础执行 | 已合并；真实C02=3d467120786dce63b841820c60dd7e9c4e99eb4e；A本人GDB、两机标准构建/CTest已有记录 |
+| A-1隔离与Rootfs | PR #3，6088ccece75b450255c99ab269f059bdb2efe30e；已有原生隔离/失败/中断与A本人strace |
+| B-2资源模块 | PR #4，92ac8694c3c6060e3fdc727e2d3db9cdef08d328；独立资源探针，不混同full |
+| A-2 full集成 | PR #5，0a5ddaa8218b4456fac6ef27101a19c5b79d5760；旧候选7项保留作历史 |
+| B-3统一原生验收 | PR #6，25cf83acb7bfe080e12c1eb19d4318721f7fb109；Ubuntu/openSUSE均对97800f0完成12项PASS、总退出0及Debug/CTest 1/1 |
+| A-3/B-4材料 | 进行中；A维护README/架构/台账/共同提纲/启动讲解，B独立写资源/工具/demo说明 |
+| 最终现场彩排/录像/发布 | 待本人真实执行与双方审查确认；未创建稳定通过标签，不冒签完成 |
+
+证据：[A同候选记录](evidence/A/integration/ubuntu-97800f0.md)、[B同候选复验](evidence/B/B3/report.md)末尾小节、[A的GDB](evidence/A/S02/gdb-record.md)、[A的strace](evidence/A/isolation/strace-record.md)。attach-failure为测试构建触发真实内核ESRCH；CPU baseline为isolate。中断回收已在统一full中真实验证，不再沿用旧NOT_RUN作为当前结论。
+
+历史失败（包括缺/dev/null、缺Rootfs和runner报告错误）全部保留；历史LSan初始化失败、ASan禁用leak检测的覆盖限制不改写为泄漏检测通过。B剩余人工学习/材料记录按其本人反馈补，不从技术PASS推断完成。未发现需要本轮改源码才能完成材料的新增阻断；演示仍待彩排。11-02起冻结新增功能，不执行旧S03–S10串行门禁、不重跑整套已通过验收。
+
+本轮仅文档分支a/report-materials，交B审查，不自动合并或开始V2/V3。
+
+## 旧阶段总表（历史计划，后续执行顺序以新版加速流程为准）
+
 | 阶段 | 执行人 | 必须依赖的已合并基线 | 产出与合并节点 | 能否并行 |
 |---|---|---|---|---|
 | S00 初始化与接口初稿 | A / Ubuntu | 无 | GitHub 仓库、文档、可构建骨架，记 C00 | 首次串行 |
@@ -21,7 +43,7 @@
 表中 Cxx 是“阶段完成后 main 的真实提交 SHA”，不是分支名，也不是需要创建的 Git 标签。必须填入阶段台账。依赖通过并合并后，接手者才 `git fetch origin`、`git switch main`、`git pull --ff-only`，核对 SHA 后新建阶段分支。不得依据聊天中的“已经好了”跳过同步。已有分支先处理未提交修改，不自动 reset/clean/stash。
 
 
-## 当前状态
+## 历史状态（早期阶段原始记录，非当前结论）
 
 S00：初始提交已由 A 推送。旧报告 `docs/evidence/A/S00/report.md` 是推送前记录，保留原始观察；不让 A 为补填自身 SHA 再提交。C00=`40040ab865ece11b1f7211ca37e01ac4c2979d0f`；本地 `origin/main`、HEAD 与远端 `main` 均已核实一致。
 
