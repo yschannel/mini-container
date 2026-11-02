@@ -29,6 +29,6 @@
 
 ### 随后两次真实重跑
 
-B 随后回报同一 openSUSE 普通终端连续重跑两次；本机可见的原始汇总分别为 `artifacts/b3/native-20261102-191712/verification.json`（SHA-256 `6a07ec1c37021c3995b14b06ac0018a16e9c32bfefe0e9c9de5b7e628a2c4f85`）和 `artifacts/b3/native-20261102-191728/verification.json`（SHA-256 `7c28678771cdcf3e5edd959c4d0d0721c5e506b6b76c561a20ef371fd1929da4`）。两份汇总均记录 `sha=f2a08e6f71df86508634f7642da8d316060db37b`、`dirty=false`、**12/12 PASS**；各项 `cleanup.complete=true`、`snapshot_error=null`、`evidence_errors=[]`。用户确认两次成功；未单独回传总 shell 退出码或计时器总耗时。汇总中逐项墙钟合计分别约 10.50 秒和 10.48 秒，不等于整场讲解耗时。
+B 随后回报同一 openSUSE 普通终端连续重跑两次；本机可见的原始汇总分别为 `artifacts/b3/native-20261102-191712/verification.json`（SHA-256 `6a07ec1c37021c3995b14b06ac0018a16e9c32bfefe0e9c9de5b7e628a2c4f85`）和 `artifacts/b3/native-20261102-191728/verification.json`（SHA-256 `7c28678771cdcf3e5edd959c4d0d0721c5e506b6b76c561a20ef371fd1929da4`）。两份汇总均记录 `sha=f2a08e6f71df86508634f7642da8d316060db37b`、`dirty=false`、**12/12 PASS**；各项 `cleanup.complete=true`、`snapshot_error=null`、`evidence_errors=[]`。第二次成功的终端原文另确认 `minic-b3-1793618248-11747.scope`、最终 `PASS: native full cases`、**shell exit=0**；第一次成功重跑未单独回传总 shell 退出码。两次均无计时器总耗时记录；汇总中逐项墙钟合计分别约 10.50 秒和 10.48 秒，不等于整场讲解耗时。
 
 第一次成功重跑的 CPU 限额例读回 `20000 100000`，墙钟 5.072 秒、`usage_usec=1013238`、`nr_throttled=50`；第二次为 5.078 秒、`usage_usec=1013572`、`nr_throttled=51`。两次 OOM 例 `oom_kill=1`、CLI 137/signal9；两种中断、测试构建 attach 拒绝和失败回收均由 runner 记为 PASS。可据此做现场演示，但首次 FAIL 的具体断言原因仍未定位，不能删去或改写。后续若需解决偶发 FAIL，由测试负责人在其负责范围内增强诊断并复验。
