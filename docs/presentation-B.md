@@ -1,4 +1,6 @@
-# B-4 资源与工具讲解（约 90 秒）
+# B-4 资源与工具技术参考（供 A 单人汇报取材）
+
+11 月 4 日由 A 单人完成 6 分钟汇报，Ubuntu 主演示；本文保留 B 的真实技术贡献、代码和证据索引，供 A 独立整理统一讲稿，不安排 B 接话。现场短演示见 [demo.md](demo.md)，不重跑完整 12 项。
 
 基线：main `25cf83acb7bfe080e12c1eb19d4318721f7fb109` 包含 PR #6；两机完整原生结果针对相同的干净实现/脚本候选 `97800f0244b807466e7c516021f3c40b882abf45`，不是本讲稿提交。新版分工和判定见 [流程](workflow.md) 与 [加速流程](../V1_ACCELERATED_WORKFLOW.md)。
 
@@ -20,6 +22,6 @@
 
 Ubuntu 24.04/VMware 与 openSUSE Tumbleweed 20261028 的 systemd/内核和计数细节不同；两机各自原生构建、在同一候选跑统一 12 项且均 PASS。原始日志在各自本机 `artifacts/b3/native-*/verification.json`，提交的精选记录分别在上面两份文档；不把两机 PID、节流计数或 scope 路径当成固定常量。
 
-## 给 A 的共同提纲短段
+## 给 A 取用的资源与工具短段
 
 “B 负责资源和工程工具：systemd 将 cpu/memory 委派给本次 scope，父进程在放行子进程前创建 cgroup 叶子、写并读回 20ms/100ms CPU 额度与 64MiB/swap0，attach 宿主 PID；结束后先保存计数快照再删除叶子。双机同候选 12 项通过：CPU 有实际节流，OOM 有本轮叶子的 `oom_kill`，配置/测试构建 attach 拒绝不放行，中断后代已清理。CTest 是非特权 V0 回归；ASan 关闭泄漏检测后 1/1 通过，泄漏检测和特权资源路径不在其验证范围。”
