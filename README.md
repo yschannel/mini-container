@@ -113,4 +113,4 @@ CPU/OOM依据删除前的 cpu.stat/memory.events 和精确配置读回，不能�
 
 历史V0的ASan在禁用LeakSanitizer后通过；LSan在当时环境初始化失败，**未证明泄漏检测通过**，也不能把V0工具结果扩展为完整V1内核资源验证。详见 [B的S02记录](docs/evidence/B/S02/report.md)。
 
-[共同提纲](docs/report-outline.md) · [A启动/隔离讲解](docs/presentation-A.md) · [阶段台账](docs/stages.md) · [A的GDB](docs/evidence/A/S02/gdb-record.md) · [A的strace](docs/evidence/A/isolation/strace-record.md)。B单独维护资源/工具讲解和demo说明；彩排/录像实际完成前保持待办。build、artifacts、Rootfs、主机私密配置不入Git。
+[A单人汇报提纲](docs/report-outline.md) · [A完整讲解稿](docs/presentation-A.md) · [阶段台账](docs/stages.md) · [A的GDB](docs/evidence/A/S02/gdb-record.md) · [A的strace](docs/evidence/A/isolation/strace-record.md)。11月4日由A独自汇报；B提供资源/工具材料、技术审校和台下备用支持，开发与实机操作归属保持真实。彩排/录像实际完成前保持待办。build、artifacts、Rootfs、主机私密配置不入Git。

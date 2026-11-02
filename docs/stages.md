@@ -13,7 +13,7 @@
 | B-2资源模块 | PR #4，92ac8694c3c6060e3fdc727e2d3db9cdef08d328；独立资源探针，不混同full |
 | A-2 full集成 | PR #5，0a5ddaa8218b4456fac6ef27101a19c5b79d5760；旧候选7项保留作历史 |
 | B-3统一原生验收 | PR #6，25cf83acb7bfe080e12c1eb19d4318721f7fb109；Ubuntu/openSUSE均对97800f0完成12项PASS、总退出0及Debug/CTest 1/1 |
-| A-3/B-4材料 | 进行中；A维护README/架构/台账/共同提纲/启动讲解，B独立写资源/工具/demo说明 |
+| A-3/B-4材料 | 进行中；A维护README/架构/台账/单人提纲/完整讲稿；11月4日A独自汇报，B不上台，提供资源/工具资料与技术审校，实际开发分工不变 |
 | 最终现场彩排/录像/发布 | 待本人真实执行与双方审查确认；未创建稳定通过标签，不冒签完成 |
 
 证据：[A同候选记录](evidence/A/integration/ubuntu-97800f0.md)、[B同候选复验](evidence/B/B3/report.md)末尾小节、[A的GDB](evidence/A/S02/gdb-record.md)、[A的strace](evidence/A/isolation/strace-record.md)。attach-failure为测试构建触发真实内核ESRCH；CPU baseline为isolate。中断回收已在统一full中真实验证，不再沿用旧NOT_RUN作为当前结论。
