@@ -19,4 +19,10 @@
 
 ## 彩排记录
 
-待本人在普通终端按上面顺序实际彩排后填写：时间、系统、HEAD/dirty、命令和 shell 退出码、本次 `verification.json` 路径、12 项结果、演示耗时、失败与调整。没有本人回传前，本节状态为 **NOT_RUN**；已有 2026-11-01 双机验收是先前验证，不能当作 B-4 彩排。
+2026-11-02 19:16（目录时间，Asia/Shanghai），B 在 openSUSE 普通终端从干净的 `f2a08e6f71df86508634f7642da8d316060db37b` 执行 `./scripts/with-delegation.sh --acceptance`，scope 为 `minic-b3-1793618202-9006.scope`。本次原始记录：`artifacts/b3/native-20261102-191644/verification.json`。终端回传在 `cpu-limited FAIL` 后出现 Python `AssertionError`；末尾 `echo "exit=$?"` 输出在用户消息中截断为 `ex`，因此总 shell 退出码与完整演示耗时**未确认**。
+
+汇总已有 9 项：smoke、exit7、exit125、exit127、missing、create-failure、attach-failure、cpu-baseline 共 **8 PASS**；cpu-limited **1 FAIL**；memory-oom、interrupt-sigint、interrupt-sigterm 因 runner 在断言处停止，均 **NOT_RUN**。本次彩排整体 **未通过**，不能引用 2026-11-01 的 12 项 PASS 覆盖它。
+
+`cpu-limited` 的原始 result 是 `kind=exited`、CLI 0、`cleanup.complete=true`，读回 `cpu.max=20000 100000`、`memory.max=67108864`、`memory.swap.max=0`；墙钟 5.131918 秒，`usage_usec=1006722`（约 19.62% 单核墙钟），`nr_periods=51`、`nr_throttled=51`、`throttled_usec=4071771`。快照叶子及 scope 在事后查询时已不存在，宿主 PID 9427 事后亦不存在。这些值说明限额/节流现象出现，**不能**据此覆盖 runner 当时的 FAIL。
+
+当前 `tests/full_acceptance.py` 在保存该 FAIL 前将 CLI/JSON、限额、叶子/宿主 PID 是否消失、宿主 hostname/mountinfo 是否未变合成一个布尔值，没有在汇总中记录失败的是哪一条。由于事后检查不能重建当时状态，失败断言的精确原因**尚未定位**。本阶段按约定不改源码或测试、不重复整套验收；现场演示改用本次 FAIL 的真实日志解释边界，并备好 2026-11-01 的两机历史证据。后续由测试负责人单独定位并复验受影响项，再决定是否重做完整彩排。
