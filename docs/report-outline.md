@@ -1,39 +1,39 @@
-# A单人汇报提纲（暂按9分钟）
+# A单人6分钟汇报提纲
 
-2026-11-04由A（yschannel）独自完成全部讲解、演示和问答，B（Blonisco）不上台，无接话安排。项目仍由两人开发：A负责Runtime、隔离/Rootfs、full集成和Ubuntu验证；B负责cgroup、资源负载/探针、构建测试支持、统一验收和openSUSE验证。A讲述B的工作时明确归属，不说成独立完成或亲手执行了B的操作。
+2026-11-04由A（yschannel）独自汇报，Ubuntu为主演示环境，B（Blonisco）不上台。项目是两人共同开发：A负责Runtime、隔离/Rootfs、full集成与Ubuntu验证；B负责cgroup、资源负载/探针、构建测试支持、统一验收与openSUSE验证。A讲述B的工作和工具记录时明确归属，不说成独立完成。
 
-A维护本提纲、README、架构、台账和单人讲稿；B可在台下提供资源/工具材料、核对技术内容及备用演示支持，不同时修改A维护的文件。2026-11-02起冻结新增功能。本文件是待彩排稿，不把建议命令或学习计划写成实测完成。
+本提纲及统一讲稿由A维护。B在PR #7独立维护presentation-B.md和demo.md，提供技术审校与备用支持；不同时修改A文件。资源/工具摘要参考已审查的PR #7提交f2a08e6；原稿的openSUSE三分钟完整验收演示不直接套到本场。B的后续修订待独立审查，不在本分支自动合并。
 
-版本页固定两行：合并main `25cf83acb7bfe080e12c1eb19d4318721f7fb109`；两机被测实现/验收脚本 `97800f0244b807466e7c516021f3c40b882abf45`。运行源码与测试脚本相同，文档提交不冒充重测。
+材料基线main：`25cf83acb7bfe080e12c1eb19d4318721f7fb109`；两机实际被测候选：`97800f0244b807466e7c516021f3c40b882abf45`。两者运行源码/验收脚本相同，纯文档提交不冒充重测。11-02起冻结新增功能。
 
-## A的9分钟顺序
+## 六分钟分配
 
-| 时间 | A讲解和展示的内容 |
+| 时间 | A讲什么 / 屏幕 |
 |---|---|
-| 0:00–0:45 | 教学目标、两人真实分工、已实现的v0/isolate/full与安全边界 |
-| 0:45–2:45 | 完整父子时序：参数→clone先等待→create/attach→G→Rootfs/proc/exec→wait→snapshot→cleanup，解释先限额后执行 |
-| 2:45–3:45 | 隔离短例：hostname、PID1、proc和Rootfs，宿主保持不变；明确示例是isolate |
-| 3:45–5:15 | A讲B实现的cgroup：manager/jobs委派、CPU微秒额度与实测节流、内存/swap及OOM事件；展示已保存快照，不现场跑完整12项 |
-| 5:15–6:15 | 失败与清理：一次exec失败JSON；create/attach不放行，中断后代回收；snapshot先于删除 |
-| 6:15–7:15 | 工具与问题闭环：A既有GDB/strace和/dev/null修复；B的V0 ASan记录，说明LSan失败与覆盖限制 |
-| 7:15–8:15 | Ubuntu/openSUSE同候选各12项PASS；attach项为测试构建触发真实内核错误，baseline为isolate，不扩大实测范围 |
-| 8:15–9:00 | 已知限制、尚待彩排事项和冻结安排；结束陈述由A完成，不转交他人 |
+| 0:00–0:25 | 目标、真实开发分工；一页功能/版本卡 |
+| 0:25–1:40 | 完整启动顺序与排序原因；一张父子时序图 |
+| 1:40–2:25 | Ubuntu一条短isolate演示：hostname、PID1、proc/Rootfs；明确不是full例 |
+| 2:25–3:40 | cgroup与CPU/OOM；展示已保存的Ubuntu同候选快照，说明B的模块贡献 |
+| 3:40–4:20 | 失败不放行、错误分类、snapshot→cleanup；展示已有JSON摘录 |
+| 4:20–5:15 | A的GDB/strace、B的ASan边界，两机同候选各12项PASS |
+| 5:15–5:40 | 已知限制、冻结收口，A结束陈述 |
+| 5:40–6:00 | 留作命令输入/切屏缓冲，不再加新内容 |
 
-8分钟时缩短代码切屏和历史过程，不省略资源/OOM/清理与限制。10分钟时增加一个运行期namespace对照解释，不增加工具或功能。
+正文见 [presentation-A.md](presentation-A.md) 的“现场六分钟口播”。其后代码附录只用于准备和问答，台上不逐段读完。不安排B接话，不把六分钟变成压缩念完十段代码。
 
-## 页面与证据准备
+## 页面与操作安排
 
-1. 目标/分工/两个SHA。开场可说：“这是我们两人的项目，我负责启动和隔离，组员B负责资源控制和测试；今天由我统一汇报。”
-2. [架构与父子图](architecture.md)。只切三组代码：Runtime/child_entry、FullSession、CgroupSession关键方法。
-3. 隔离短演示与 [A-1备用证据](evidence/A/isolation/native-verification.md)。A自己操作终端，不等待B接话。
-4. 资源页：A按 [单人讲稿](presentation-A.md) 的资源部分解释cpu.max/cpu.stat/memory.events；展示 [Ubuntu固定候选记录](evidence/A/integration/ubuntu-97800f0.md) 的数值，B可事先核对。不要把不同候选的计数混成同一次运行。
-5. 失败与清理页：exec ENOENT、负载自身125/127、测试版attach ESRCH、中断成员消失；错误与返回值一起看。
-6. 工具页：A亲手GDB/strace，B亲手ASan/错误例按其记录归属；两机表与限制收尾。ASan旧V0覆盖不等于完整V1或泄漏检测通过。
+1. 目标/分工/两个SHA：A开场明确两人贡献，完整SHA放页脚，不逐字读。
+2. [架构与时序](architecture.md)：讲参数→clone先等待→create/attach→G→Rootfs/proc/exec→wait→snapshot→cleanup。只在问答时切源码。
+3. 隔离短例：提前准备二进制、Rootfs和sudo凭证，A独自操作Ubuntu终端，预期minic-report、PID=1及Rootfs标记；前后宿主hostname一致。命令见统一讲稿。
+4. 资源卡：只展示 [Ubuntu固定候选记录](evidence/A/integration/ubuntu-97800f0.md) 的cpu.max、cpu.stat、memory.events和cleanup。约20.12%来自本轮usage/墙钟；OOM须有oom_kill而非只看137。CPU baseline为isolate，没有基线CPU计数。
+5. 失败卡：显示已有exec ENOENT与负载exit127的kind区别；create/测试构建attach失败不放行；中断成员消失与叶子清理。六分钟默认不再运行第二个现场例。
+6. 工具与两机卡：A自己的GDB/strace，B的历史V0 ASan（LSan未通过），Ubuntu/openSUSE同候选各12项通过。数字和操作不跨候选拼接。
 
-## A独自演示与准备（待本人彩排）
+## Ubuntu演示与备用（彩排尚未完成）
 
-A用两个终端，最多一条短isolate和一条失败命令，资源使用保存的快照。具体命令见presentation-A.md。已有二进制、Rootfs和负载提前核对，不现场安装、不删除资产、不依赖B上台操作。B可台下提供已验证的材料和备用录像位置，A需事先熟悉内容。
+本场不重跑完整12项、不现场跑CTest或安装依赖。`with-delegation.sh --acceptance`是两机已验证的统一验收入口，但它运行12项，作为复验入口保留，不占本场演示时间；从普通用户启动，由脚本内部sudo。不要加一个不存在的通用`-- COMMAND`用法。
 
-现场失败保留错误，切换同候选实测记录并说明是先前结果；不把录像冒充现场，不把SKIP改PASS。源码/demo脚本变动才复验受影响项；纯文档不重跑验收。
+保存的Ubuntu原始证据目录为`artifacts/b3/native-20261101-173747`，已提交精选记录如上。提前打开所需JSON/记录页，不在台上查找最新目录；现场输出和历史快照明确区分。sudo/权限或命令异常时保留错误，切备用记录并说“这是先前实测结果”，不无限重试或把录像冒充现场。
 
-待A补充：实际彩排耗时/输出、11-03主/备用机彩排安排、录像与投影片位置、课程封面信息。待与B对齐：技术审校、资源/工具证据位置、备用支持；不再分配台上时间。材料先完成，随后分段结合代码学习；不要求反复答题或重做GDB/strace才继续。
+待A本人补：六分钟计时彩排与短isolate实际输出/退出码、最终投影片/封面、备用录像与主/备用机安排。B提供资源审校和材料支持，不占台上时间。本稿仍为待彩排建议，不把原生验收等同于彩排。先生成材料，再按代码附录一次学习一小段，不重复GDB/strace，不用答题门禁阻塞工作。
